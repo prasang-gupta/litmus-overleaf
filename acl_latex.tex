@@ -147,7 +147,7 @@ As agentic LLM systems move from prototypes to deployment across increasingly di
 
 \begin{figure}[t!]
   \includegraphics[width=\columnwidth]{figures/litmus_teaser.pdf}
-  \caption{Litmus designs metrics by asking questions first. Working from source code alone, it reconstructs the architecture, drafts candidate metrics, and puts each one under scrutiny: clarification questions go to the practitioner, validity questions it poses to itself. Based on the answers, it accepts, rejects, or re-scopes each metric, building up a justified portfolio tailored to every stage.}
+  \caption{Litmus designs metrics by asking questions first. Working from source code alone, it reconstructs the architecture, drafts candidate metrics, and puts each one under scrutiny. Based on the answers, it accepts, rejects, or re-scopes each metric, building up a justified portfolio tailored to every stage}
   \label{fig:teaser}
 \end{figure}
 
@@ -173,18 +173,18 @@ Our contributions are threefold:
 \section{Related Work}
 \label{sec:related}
 
-\subsection{Evaluation and monitoring in production AI systems}
+% \subsection{Evaluation and monitoring in production AI systems}
 Evaluation in deployed AI systems serves a broader role than benchmark comparison: it must support debugging, regression testing, monitoring, auditability, and operational decision-making. Prior work on production machine learning emphasizes that deployed ML systems accumulate hidden technical debt through data dependencies, configuration assumptions, feedback loops, and boundary failures \citep{sculley2015hidden}. \citet{breck2017mltest} argue for systematic tests that go beyond aggregate model quality, including data validation, infrastructure checks, and monitoring; \citet{amershi2019software} similarly show that engineering AI-enabled systems requires connecting model behavior to data, code, and deployment context. Documentation and auditing frameworks make a related point: intended use, limitations, assumptions, and evaluation evidence should be explicit in deployed AI systems \citep{mitchell2019model,gebru2021datasheets,raji2020closing}. Litmus follows this production-oriented view: it treats metric design as a system-level task in which metrics should be grounded in components, failure surfaces, and monitoring needs rather than only in final outputs.
 
-\subsection{Evaluation practice and metric validity}
+% \subsection{Evaluation practice and metric validity}
 A growing body of work scrutinizes how metrics are used and reported. \citet{schmidtova2024automatic} survey current NLG evaluation practice and find pervasive missing rationales, missing implementation details, and missing correlations with human judgement; \citet{zhou2022deconstructing} trace the ``kitchen-sink'' tendency to unclear evaluation goals. Validity critiques of overlap metrics \citep{reiter2018structured,papineni2002bleu,lin2004rouge} motivate the move toward LLM-as-judge evaluation \citep{liu2023geval,fu2023gptscore}. However, LLM-as-judge methods do not remove the need for specification: a judge prompt still encodes assumptions about what matters, what evidence should be considered, and how scores should be interpreted. Prior work also shows that LLM judges may exhibit systematic biases and model-family alignment effects \citep{zheng2023judging}. Litmus targets the specification gap these works identify: it produces metrics whose rationale is a first-class artifact.
 
-\subsection{Agent and tool-use evaluation}
+% \subsection{Agent and tool-use evaluation}
 % Recent benchmarks evaluate LLM agents, tool use, web navigation, and software-engineering capabilities. ReAct-style prompting combines reasoning and acting for tool-interactive tasks \citep{yao2023react}; ToolBench evaluates tool-use over large API collections \citep{qin2023toolllm}; AgentBench evaluates agents across multiple environments \citep{liu2023agentbench}; WebArena provides a realistic web environment for autonomous agents \citep{zhou2024webarena}; and SWE-bench evaluates whether language models can resolve real software-engineering issues \citep{jimenez2024swebench}. These benchmarks are important for measuring general agent capability, but deployed industry pipelines often contain domain-specific rules, retrieval layers, routing logic, fallbacks, confidence thresholds, and compliance constraints. Litmus addresses a complementary problem: designing metrics for a particular code-defined pipeline by identifying what should be measured, at which stage, and why.
 
 Recent benchmarks measure general agent capability across reasoning-and-acting, tool use, web navigation, and software-engineering tasks \citep{yao2023react,qin2023toolllm,liu2023agentbench,zhou2024webarena,jimenez2024swebench}. Deployed industry pipelines, however, contain domain-specific rules, retrieval layers, routing logic, fallbacks, confidence thresholds, and compliance constraints. Litmus addresses a complementary problem: designing metrics for a particular code-defined pipeline by identifying what should be measured, at which stage, and why.
 
-\subsection{Clarification-question generation and elicitation}
+% \subsection{Clarification-question generation and elicitation}
 % The closest conceptual neighbour to our framing is clarification-question generation. \citet{rao2018learning} formalize ``a good question is one whose expected answer is most useful'' via the expected value of perfect information, \citet{rao2019answer} generate rather than merely rank such questions, and \citet{majumder2021ask} identify information ``essential to accomplish an underlying goal but currently missing from the context.'' Litmus adopts this usefulness-of-answer stance: every question it surfaces is annotated with the specific metric decision its answer would resolve. In our setting, the missing information is not needed to answer a user query, but to determine whether a candidate metric is appropriate, what it should measure, and how it should be interpreted.
 
 The closest conceptual neighbour to our framing is clarification-question generation. \citet{rao2018learning} formalize ``a good question is one whose expected answer is most useful'' via the expected value of perfect information, \citet{rao2019answer} generate rather than merely rank such questions, and \citet{majumder2021ask} identify information ``essential to accomplish an underlying goal but currently missing from the context.'' Litmus adopts this usefulness-of-answer stance: every question it surfaces is annotated with the specific metric decision its answer would resolve. In our setting, the missing information is not needed to answer a user query, but to determine whether a candidate metric is appropriate, what it should measure, and how it should be interpreted. We distinguish this from mainstream question generation (QG/NQG), which generates answerable comprehension questions from a passage \citep{mulla2023automatic,guo2024survey,flor2025question}---a different speech act from resolving evaluation-intent ambiguity.
@@ -192,7 +192,7 @@ The closest conceptual neighbour to our framing is clarification-question genera
 % \subsection{Question generation (adjacent)}
 % Mainstream question generation (QG/NQG) generates answerable comprehension questions from a passage, evaluated by overlap and answerability \citep{mulla2023automatic,guo2024survey,flor2025question}. We cite this literature as adjacent rather than parent: Litmus asks questions to resolve evaluation-intent ambiguity, a different speech act from probing reading comprehension.
 
-\subsection{Automated metric design vs.\ implementation}
+% \subsection{Automated metric design vs.\ implementation}
 Recent systems automate parts of evaluation construction. \emph{AutoMetrics} takes outputs plus labels and fits a single runnable holistic judge -- a metric implementation system \citep{autometrics}. \emph{DynamicRubric} \citep{wangblanco2026dynamic} has the judge generate its own rubric and then score, in per-instance (\textsc{-Inst}) and dataset-wide (\textsc{-DS}) variants, with a DPO-fine-tuned generator variant (\textsc{-FineTuned}). Both assume the evaluation target is given and focus on the final output. Litmus instead elicits the target first and designs a per-stage portfolio from source code with no labels. This distinction is especially important for production AI pipelines, where failures may arise in intermediate components and where monitoring requires metrics that are traceable to system behavior.
 
 \section{The Litmus System}
@@ -213,30 +213,49 @@ Because code structure alone cannot determine intended behavior, acceptable fail
 
 Litmus begins by constructing an evidence-grounded representation of the repository. A deterministic scanner parses the codebase, builds import and symbol/call graphs, computes centrality scores, and selects salient files for LLM analysis. An LLM then synthesizes an 8--20 node component graph describing the system's major modules, their roles, AI capabilities, and associated risk surfaces, and an adversarial critic checks it against code evidence, pruning phantom components and flagging missed ones, to reduce over-interpretation. The result is a repository-level architecture that is both structural (rooted in dependency and call relationships) and semantic (components are labeled with their functional roles); full prompts are given in Appendices~\ref{app:arch} and~\ref{app:impl-arch}.
 
-\subsection{Pattern-Based Metric Search Space}
+% \subsection{Pattern-Based Metric Search Space}
 
-Litmus then maps each component to an evaluation taxonomy of pipeline-stage patterns (data acquisition, knowledge base, AI core, assurance) and cross-cutting strategies (retrieval-augmented generation, agentic orchestration). This does not select final metrics; it narrows the design space by flagging which metric families are plausibly relevant per component---e.g., a retrieval component activates coverage, grounding, and latency families. Pattern classification thus suggests candidate directions but leaves the underlying assumptions for the interrogation stage.
+% Litmus then maps each component to an evaluation taxonomy of pipeline-stage patterns (data acquisition, knowledge base, AI core, assurance) and cross-cutting strategies (retrieval-augmented generation, agentic orchestration). This does not select final metrics; it narrows the design space by flagging which metric families are plausibly relevant per component---e.g., a retrieval component activates coverage, grounding, and latency families. Pattern classification thus suggests candidate directions but leaves the underlying assumptions for the interrogation stage.
 
-\subsection{Interrogation: Turning Assumptions into Constraints}
+% \subsection{Interrogation: Turning Assumptions into Constraints}
 
-Architecture reconstruction and pattern classification identify what the system appears to do and which metric families may be relevant, but they do not settle the assumptions required to choose valid metrics. Litmus treats these unknowns as first-class objects: rather than silently assuming answers, it converts metric-affecting uncertainty into explicit questions whose answers are recorded as \emph{confirmed facts}---user- or critic-validated constraints that downstream metric design must satisfy. Confirmed facts may determine whether a metric is included, how it is computed and thresholded, what data must be instrumented, how multiple signals are aggregated, or which direction indicates improvement.
+% Architecture reconstruction and pattern classification identify what the system appears to do and which metric families may be relevant, but they do not settle the assumptions required to choose valid metrics. Litmus treats these unknowns as first-class objects: rather than silently assuming answers, it converts metric-affecting uncertainty into explicit questions whose answers are recorded as \emph{confirmed facts}---user- or critic-validated constraints that downstream metric design must satisfy. Confirmed facts may determine whether a metric is included, how it is computed and thresholded, what data must be instrumented, how multiple signals are aggregated, or which direction indicates improvement.
+\subsection{From Patterns to Constraints}
 
+Litmus next maps each component to an evaluation taxonomy of pipeline-stage
+patterns (data acquisition, knowledge base, AI core, assurance) and cross-cutting
+strategies (retrieval-augmented generation, agentic orchestration). This does not
+select final metrics; it narrows the design space by flagging which metric
+families are plausibly relevant per component---e.g., a retrieval component
+activates coverage, grounding, and latency families---while leaving the
+underlying assumptions unresolved. Litmus settles those assumptions through
+\emph{interrogation}: rather than silently assuming answers, it converts each
+metric-affecting uncertainty into an explicit question whose answer is recorded
+as a \emph{confirmed fact}---a user- or critic-validated constraint that
+downstream metric design must satisfy. Confirmed facts may determine whether a
+metric is included, how it is computed and thresholded, what data must be
+instrumented, how multiple signals are aggregated, or which direction indicates
+improvement.
 \subsection{Metric Design and Export}
 
 Only after interrogation does Litmus finalize the portfolio. Conditioned on the reconstructed architecture, the component classifications, and the confirmed facts, the designer emits a small number of high-signal metrics per component: deterministic checks, LLM-as-judge metrics (scored on a five-level rubric with an evidence-backed rationale), and composite metrics; each specifying its evaluated component, purpose, required data, computation, direction of goodness, and validity conditions. The result is a justified specification rather than a list of names: every metric is linked to the evidence and confirmed facts that support it, so the portfolio can be audited. Litmus exports runnable definitions with this traceability and, where possible, maps each evaluation metric to a production monitoring counterpart, carrying the same rationale from offline design to deployment.
 
+
+
 \section{Experimental Setup}
 \label{sec:setup}
 
-\subsection{Evaluation Overview}
-\label{sec:setup_overview}
+% \subsection{Evaluation Overview}
+% \label{sec:setup_overview}
 
-We evaluate whether Litmus produces metric portfolios that are broader, less redundant, and empirically aligned with quality labels. Because Litmus is a source-code-based metric-design system while the baselines construct final-output judges or rubrics, we interpret the results as trade-offs under a zero-label design-time constraint rather than universal superiority claims.
+% We evaluate whether Litmus produces metric portfolios that are broader, less redundant, and empirically aligned with quality labels. Because Litmus is a source-code-based metric-design system while the baselines construct final-output judges or rubrics, we interpret the results as trade-offs under a zero-label design-time constraint rather than universal superiority claims.
 
 \subsection{Evaluation Domains}
 \label{sec:pipelines}
 
-We evaluate on three real, code defined AI pipelines from different domains. This multi-pipeline setup tests whether the benefits of eliciting evaluation targets are specific to one artifact or generalize across production style systems with different tasks, data, and failure modes.
+% We evaluate on three real, code defined AI pipelines from different domains. This multi-pipeline setup tests whether the benefits of eliciting evaluation targets are specific to one artifact or generalize across production style systems with different tasks, data, and failure modes.
+
+Because Litmus is a source-code-based metric-design system while the baselines construct final-output judges or rubrics, we interpret the results as trade-offs under a zero-label design-time constraint rather than universal superiority claims. We evaluate on three real, code-defined AI pipelines from different domains, testing whether the benefits of eliciting evaluation targets generalize across production-style systems with different tasks, data, and failure modes rather than being specific to one artifact.
 
 % \subsubsection{Account grouping}
 % In audit work, account grouping is the classification of individual client general ledger accounts into standardized, aggregated categories for financial statements. For each account, the pipeline emits an \texttt{account\_group}, a confidence score, and a natural language reason. The pipeline contains multiple decision paths, including rule based overrides, disaggregation logic, and retrieval augmented mapping. This setting stresses whether metrics can distinguish branch-specific failures rather than only score the final assigned group.
@@ -247,14 +266,21 @@ We evaluate on three real, code defined AI pipelines from different domains. Thi
 
 % \subsubsection{Inherent Risk Assessment}
 % Inherent risk assessment (IRA) is a core audit planning task: auditors must identify high-risk areas that require additional scrutiny without over-auditing areas where risk is low. The workflow is organized around inherent risk factors (IRFs), a standardized set of risk categories used to evaluate where material misstatement or audit complexity may arise. For each \texttt{(account group, FSLI, IRF)} tuple, the IRA pipeline assigns a risk level and produces an evidence-grounded justification from retrieved client source documents. This use case combines retrieval, structured risk classification, and audit-facing explanation. It tests whether Litmus can design metrics for a risk-assessment workflow where correctness depends jointly on the selected risk level, the relevant client evidence, and the justification connecting them.
-\subsubsection{Account grouping}
-In audit work, account grouping classifies individual client general-ledger accounts into standardized, aggregated financial-statement categories. For each account the pipeline emits an \texttt{account\_group}, a confidence score, and a natural-language reason, via multiple decision paths (rule-based overrides, disaggregation logic, and retrieval-augmented mapping). This setting stresses whether metrics can isolate branch-specific failures rather than only score the final assigned group.
+% \subsubsection{Account grouping}
 
-\subsubsection{Scientific QA}
-Scientific QA is an agentic question-answering pipeline in the PaperQA2/LitQA2 \cite{skarlinski2024languageagentsachievesuperhuman} setting: given a research question, multiple-choice options, and retrieved passages, the system synthesizes an evidence-grounded answer and selects an option. We evaluate the answer-synthesis stage on a key-passage corpus, isolating answer quality given relevant evidence, and test whether metric design adapts to evidence-grounded reasoning rather than a financial workflow.
+% In audit work, account grouping classifies individual client general-ledger accounts into standardized, aggregated financial-statement categories. For each account the pipeline emits an \texttt{account\_group}, a confidence score, and a natural-language reason, via multiple decision paths (rule-based overrides, disaggregation logic, and retrieval-augmented mapping). This setting stresses whether metrics can isolate branch-specific failures rather than only score the final assigned group.
 
-\subsubsection{Inherent Risk Assessment}
-Inherent risk assessment (IRA) is a core audit-planning task: auditors must flag high-risk areas needing scrutiny without over-auditing low-risk ones. It is organized around inherent risk factors (IRFs), a standardized set of risk categories indicating where material misstatement or audit complexity may arise. For each \texttt{(account group, FSLI, IRF)} tuple, the pipeline assigns a risk level and produces an evidence-grounded justification from retrieved client documents. Combining retrieval, structured risk classification, and audit-facing explanation, it tests whether Litmus can design metrics where correctness depends jointly on the risk level, the relevant evidence, and the justification linking them.
+\paragraph{Account grouping} This in audit classifies individual client general-ledger accounts into standardized, aggregated financial-statement categories. For each account the pipeline emits an \texttt{account\_group}, a confidence score, and a natural-language reason, via multiple decision paths (rule-based overrides, disaggregation logic, and retrieval-augmented mapping).
+
+% Scientific QA is an agentic question-answering pipeline in the PaperQA2/LitQA2 \cite{skarlinski2024languageagentsachievesuperhuman} setting: given a research question, multiple-choice options, and retrieved passages, the system synthesizes an evidence-grounded answer and selects an option. We evaluate the answer-synthesis stage on a key-passage corpus, isolating answer quality given relevant evidence, and test whether metric design adapts to evidence-grounded reasoning rather than a financial workflow.
+
+\paragraph{Scientific QA} This is an agentic question-answering pipeline in the PaperQA2/LitQA2 \cite{skarlinski2024languageagentsachievesuperhuman} setting: given a research question, multiple-choice options, and retrieved passages, the system synthesizes an evidence-grounded answer and selects an option. We evaluate the answer-synthesis stage on a key-passage corpus, isolating answer quality given relevant evidence.
+
+% \subsubsection{Inherent Risk Assessment}
+
+% Inherent risk assessment (IRA) is a core audit-planning task: auditors must flag high-risk areas needing scrutiny without over-auditing low-risk ones. It is organized around inherent risk factors (IRFs), a standardized set of risk categories indicating where material misstatement or audit complexity may arise. For each \texttt{(account group, FSLI, IRF)} tuple, the pipeline assigns a risk level and produces an evidence-grounded justification from retrieved client documents. Combining retrieval, structured risk classification, and audit-facing explanation, it tests whether Litmus can design metrics where correctness depends jointly on the risk level, the relevant evidence, and the justification linking them.
+
+\paragraph{Inherent risk assessment (IRA)} This is a core audit-planning task: auditors must flag high-risk areas needing scrutiny without over-auditing low-risk ones. It is organized around inherent risk factors (IRFs), a standardized set of risk categories indicating where material misstatement or audit complexity may arise. For each \texttt{(account group, FSLI, IRF)} tuple, the pipeline assigns a risk level and produces an evidence-grounded justification from retrieved client documents.
 
 \subsection{Systems Compared}
 \label{sec:systems_compared}
@@ -281,42 +307,89 @@ Comparison protocol. Litmus is source-code grounded and produces a per-stage met
 \label{tab:comparison_protocol}
 \end{table}
 
-Litmus emits portfolios per-stage (14 metrics for account grouping, 13 for scientific QA, 14 for inherent risk assessment) that include monitoring metrics, scope-scoped LLM-as-judge metrics, and code-evaluated checks. The baselines instead score the final output: AutoMetrics~\citep{autometrics} fits a holistic judge from outputs and labels (trained on a separate client/train split, so its validity is out-of-distribution), and DynamicRubric~\citep{wangblanco2026dynamic} generates a 1--5 rubric in three variants---per-instance (\textsc{Inst}), dataset-wide (\textsc{DS}), and DPO-fine-tuned (\textsc{FineTuned}). Unlike Litmus, neither baseline produces per-stage monitoring metrics.
-
-\begin{table}[t!]
+\begin{table*}[t]
 \centering
 \setlength{\tabcolsep}{4pt}
-\resizebox{\columnwidth}{!}{%
-\begin{tabular}{lccc}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccccccc}
 \toprule
-System & $\rho$ [95\% CI] & $\tau$-b & $p$ \\
+& \multicolumn{6}{c}{Multi-axis (single-pass, temp.\ 0)} & \multicolumn{3}{c}{Single-vector validity (B3)} \\
+\cmidrule(lr){2-7}\cmidrule(lr){8-10}
+System & Cov.\ $\uparrow$ & Ground.\ $\uparrow$ & Redund.\ $\downarrow$ & Valid.\ $\tau\uparrow$ & Valid.\ $\rho\uparrow$ & Deg.\ ind.\ $\uparrow$ & $\rho$ [95\% CI] & $\tau$-b & $p$ \\
 \midrule
-\multicolumn{4}{l}{\emph{P1: Account grouping ($n{=}112$)}}\\
-AutoMetrics & 0.45 [0.29, 0.59] & 0.35 & $<\!0.001$ \\
-DynRub-\textsc{Inst} & 0.45 [0.29, 0.58] & 0.40 & $<\!0.001$ \\
-DynRub-\textsc{DS} & 0.27 [0.08, 0.42] & 0.25 & $0.005$ \\
-DynRub-\textsc{FT} & 0.47 [0.32, 0.60] & 0.41 & $<\!0.001$ \\
-\textbf{Litmus (ours)} & \textbf{0.53 [0.37, 0.67]} & \textbf{0.49} & $<\!0.001$ \\
+\multicolumn{10}{l}{\emph{P1: Account grouping (financial), $n{=}112$}}\\
+AutoMetrics & 0.30 & 0.41 & 0.14 & 0.30 & 0.34 & 0.54 & 0.45 [0.29, 0.59] & 0.35 & $<\!0.001$ \\
+DynRub-\textsc{Inst} & 0.40 & 0.15 & \textbf{0.00} & 0.40 & 0.45 & 0.71 & 0.45 [0.29, 0.58] & 0.40 & $<\!0.001$ \\
+DynRub-\textsc{DS} & 0.40 & 0.35 & \textbf{0.00} & 0.25 & 0.27 & 0.52 & 0.27 [0.08, 0.42] & 0.25 & $0.005$ \\
+DynRub-\textsc{FT} & 0.40 & 0.35 & \textbf{0.00} & 0.41 & 0.47 & 0.68 & 0.47 [0.32, 0.60] & 0.41 & $<\!0.001$ \\
+\textbf{Litmus (ours)} & \textbf{0.80} & \textbf{0.45} & 0.02 & \textbf{0.49} & \textbf{0.51} & \textbf{0.77} & \textbf{0.53 [0.37, 0.67]} & \textbf{0.49} & $<\!0.001$ \\
 \midrule
-\multicolumn{4}{l}{\emph{P2: Scientific QA (LitQA2) ($n{=}58$)}}\\
-AutoMetrics & 0.47 [0.24, 0.63] & 0.42 & $<\!0.001$ \\
-DynRub-\textsc{Inst} & $-0.06$ [$-0.12$, $-0.04$] & $-0.06$ & $1.00$ \\
-DynRub-\textsc{DS} & $-0.12$ [$-0.23$, $-0.09$] & $-0.12$ & $1.00$ \\
-DynRub-\textsc{FT} & 0.27 [$-0.07$, 0.71] & 0.27 & $0.040$ \\
-\textbf{Litmus (ours)} & \textbf{0.72 [0.43, 0.93]} & \textbf{0.71} & $<\!0.001$ \\
+\multicolumn{10}{l}{\emph{P2: Scientific QA (LitQA2), $n{=}58$}}\\
+AutoMetrics & 0.67 & 0.19 & 0.14 & 0.68 & 0.69 & 0.92 & 0.47 [0.24, 0.63] & 0.42 & $<\!0.001$ \\
+DynRub-\textsc{Inst} & 0.83 & 0.15 & \textbf{0.00} & $-0.06$ & $-0.06$ & \textbf{0.95} & $-0.06$ [$-0.12$, $-0.04$] & $-0.06$ & $1.00$ \\
+DynRub-\textsc{DS} & 0.67 & \textbf{0.35} & \textbf{0.00} & $-0.12$ & $-0.12$ & \textbf{0.95} & $-0.12$ [$-0.23$, $-0.09$] & $-0.12$ & $1.00$ \\
+DynRub-\textsc{FT} & \textbf{1.00} & \textbf{0.35} & \textbf{0.00} & 0.27 & 0.27 & \textbf{0.95} & 0.27 [$-0.07$, 0.71] & 0.27 & $0.040$ \\
+\textbf{Litmus (ours)} & \textbf{1.00} & 0.32 & 0.01 & \textbf{0.71} & \textbf{0.72} & 0.94 & \textbf{0.72 [0.43, 0.93]} & \textbf{0.71} & $<\!0.001$ \\
 \midrule
-\multicolumn{4}{l}{\emph{P3: Inherent risk assessment (IRF) ($n{=}112$)}}\\
-AutoMetrics & 0.36 [0.18, 0.51] & 0.27 & $<\!0.001$ \\
-DynRub-\textsc{Inst} & 0.11 [$-0.08$, 0.28] & 0.09 & $0.245$ \\
-DynRub-\textsc{DS} & 0.28 [0.10, 0.45] & 0.25 & $0.003$ \\
-DynRub-\textsc{FT} & 0.25 [0.05, 0.42] & 0.21 & $0.008$ \\
-\textbf{Litmus (ours)} & \textbf{0.39 [0.22, 0.52]} & \textbf{0.28} & $<\!0.001$ \\
+\multicolumn{10}{l}{\emph{P3: Inherent risk assessment (IRF), $n{=}112$}}\\
+AutoMetrics & 0.83 & 0.16 & 0.07 & 0.25 & 0.31 & 0.71 & 0.36 [0.18, 0.51] & 0.27 & $<\!0.001$ \\
+DynRub-\textsc{Inst} & 0.83 & 0.15 & \textbf{0.00} & 0.09 & 0.11 & 0.65 & 0.11 [$-0.08$, 0.28] & 0.09 & $0.245$ \\
+DynRub-\textsc{DS} & 0.00 & 0.35 & \textbf{0.00} & 0.25 & 0.28 & 0.49 & 0.28 [0.10, 0.45] & 0.25 & $0.003$ \\
+DynRub-\textsc{FT} & 0.83 & 0.35 & \textbf{0.00} & 0.21 & 0.25 & 0.82 & 0.25 [0.05, 0.42] & 0.21 & $0.008$ \\
+\textbf{Litmus (ours)} & \textbf{0.83} & \textbf{0.42} & 0.05 & \textbf{0.27} & \textbf{0.32} & \textbf{0.84} & \textbf{0.39 [0.22, 0.52]} & \textbf{0.28} & $<\!0.001$ \\
 \bottomrule
 \end{tabular}%
 }
-\caption{Single-vector validity (B3) across all three pipelines: the stitched per-row score (mean of per-column $z$-scores; branch-disjoint judges stitch to one vector, holistic systems collapse to their $z$-mean composite) correlated with the per-row quality label, with 1000-resample bootstrap 95\% CIs ($\rho$) and 5000-permutation $p$-values (seed 20260615).}
-\label{tab:b3}
-\end{table}
+\caption{Multi-axis comparison and single-vector validity (B3) across three
+pipelines. Bold marks the best value per panel; arrows give the preferred
+direction. Cov.~=~coverage, Ground.~=~grounding, Redund.~=~redundancy,
+Valid.~$\tau$/$\rho$~=~validity vs.\ the per-row quality label, Deg.\ ind.~=~degradation
+sensitivity (single-pass, temperature~0; the first three are LLM-assessed, see
+Section~\ref{sec:limitations}). B3 is the stitched single-vector score vs.\ the
+same label, with bootstrap 95\% CIs and permutation $p$-values; its $\rho$ is a
+single coefficient and differs from the per-metric Valid.\ $\rho$.}
+\label{tab:main}
+\end{table*}
+
+
+% Litmus emits portfolios per-stage (14 metrics for account grouping, 13 for scientific QA, 14 for inherent risk assessment) that include monitoring metrics, scope-scoped LLM-as-judge metrics, and code-evaluated checks. The baselines instead score the final output: AutoMetrics~\citep{autometrics} fits a holistic judge from outputs and labels (trained on a separate client/train split, so its validity is out-of-distribution), and DynamicRubric~\citep{wangblanco2026dynamic} generates a 1--5 rubric in three variants---per-instance (\textsc{Inst}), dataset-wide (\textsc{DS}), and DPO-fine-tuned (\textsc{FineTuned}). Unlike Litmus, neither baseline produces per-stage monitoring metrics.
+
+Litmus emits portfolios per-stage (14 metrics for account grouping, 13 for scientific QA, 14 for inherent risk assessment) that include monitoring metrics, scope-scoped LLM-as-judge metrics, and code-evaluated checks. The baselines (Section~\ref{sec:related}) instead score the final output and, unlike Litmus, produce no per-stage monitoring metrics; AutoMetrics is additionally trained on a separate client/train split, so its validity is out-of-distribution.
+
+% \begin{table}[t!]
+% \centering
+% \setlength{\tabcolsep}{4pt}
+% \resizebox{\columnwidth}{!}{%
+% \begin{tabular}{lccc}
+% \toprule
+% System & $\rho$ [95\% CI] & $\tau$-b & $p$ \\
+% \midrule
+% \multicolumn{4}{l}{\emph{P1: Account grouping ($n{=}112$)}}\\
+% AutoMetrics & 0.45 [0.29, 0.59] & 0.35 & $<\!0.001$ \\
+% DynRub-\textsc{Inst} & 0.45 [0.29, 0.58] & 0.40 & $<\!0.001$ \\
+% DynRub-\textsc{DS} & 0.27 [0.08, 0.42] & 0.25 & $0.005$ \\
+% DynRub-\textsc{FT} & 0.47 [0.32, 0.60] & 0.41 & $<\!0.001$ \\
+% \textbf{Litmus (ours)} & \textbf{0.53 [0.37, 0.67]} & \textbf{0.49} & $<\!0.001$ \\
+% \midrule
+% \multicolumn{4}{l}{\emph{P2: Scientific QA (LitQA2) ($n{=}58$)}}\\
+% AutoMetrics & 0.47 [0.24, 0.63] & 0.42 & $<\!0.001$ \\
+% DynRub-\textsc{Inst} & $-0.06$ [$-0.12$, $-0.04$] & $-0.06$ & $1.00$ \\
+% DynRub-\textsc{DS} & $-0.12$ [$-0.23$, $-0.09$] & $-0.12$ & $1.00$ \\
+% DynRub-\textsc{FT} & 0.27 [$-0.07$, 0.71] & 0.27 & $0.040$ \\
+% \textbf{Litmus (ours)} & \textbf{0.72 [0.43, 0.93]} & \textbf{0.71} & $<\!0.001$ \\
+% \midrule
+% \multicolumn{4}{l}{\emph{P3: Inherent risk assessment (IRF) ($n{=}112$)}}\\
+% AutoMetrics & 0.36 [0.18, 0.51] & 0.27 & $<\!0.001$ \\
+% DynRub-\textsc{Inst} & 0.11 [$-0.08$, 0.28] & 0.09 & $0.245$ \\
+% DynRub-\textsc{DS} & 0.28 [0.10, 0.45] & 0.25 & $0.003$ \\
+% DynRub-\textsc{FT} & 0.25 [0.05, 0.42] & 0.21 & $0.008$ \\
+% \textbf{Litmus (ours)} & \textbf{0.39 [0.22, 0.52]} & \textbf{0.28} & $<\!0.001$ \\
+% \bottomrule
+% \end{tabular}%
+% }
+% \caption{Single-vector validity (B3) across all three pipelines: the stitched per-row score (mean of per-column $z$-scores; branch-disjoint judges stitch to one vector, holistic systems collapse to their $z$-mean composite) correlated with the per-row quality label, with 1000-resample bootstrap 95\% CIs ($\rho$) and 5000-permutation $p$-values (seed 20260615).}
+% \label{tab:b3}
+% \end{table}
 
 
 % \subsection{Evaluation Axes}
@@ -338,92 +411,105 @@ since the final-output baselines were not built to optimize these, we treat them
 as descriptive diagnostics rather than a like-for-like contest. Each axis is
 defined in its subsection below; full scoring rubrics are in Appendix~\ref{app:arch}.
 
-\subsubsection{Validity}
-This is the \emph{criterion validity} of \citet{autometrics}: the association
-(Kendall's $\tau$, Spearman's $\rho$) between a system's score on uncorrupted
-outputs and an independent per-row quality label. As the only axis grounded in a
-target external to every system, it is our primary comparison. Scope-matched judges are scored against the matching
-label; for aggregate reporting we compute a stitched per-row score
-(Section~\ref{sec:results}).
+\paragraph{Validity}This is the \emph{criterion validity} of \citet{autometrics}: the association (Kendall's $\tau$, Spearman's $\rho$) between a system's score on uncorrupted outputs and an independent per-row quality label. As the only axis grounded in a target external to every system, it is our primary comparison. Scope-matched judges are scored against the matching label; for aggregate reporting we compute a stitched per-row score (Section~\ref{sec:results}).
 
-\subsubsection{Coverage}
-Coverage is the fraction of a fixed, domain-specific list of reference failure concerns addressed by at least one metric (ten for account grouping, six each for scientific QA and inherent risk assessment), capturing whether a portfolio spans the failure surface rather than emitting one generic score. As the baselines emit a single judge or rubric, we report it descriptively.
+% \subsubsection{Coverage}
 
-\subsubsection{Grounding}
-Grounding measures how concretely a metric refers to implementation artifacts---named modules, fields, rules, branches, or source-code behavior---rather than generic evaluation language, on a $[0,1]$ scale (higher is stronger). It reflects Litmus's source-code-grounded design goal; output-only baselines lack access to such artifacts, so this axis describes artifact specificity rather than a baseline deficiency.
+% Coverage is the fraction of a fixed, domain-specific list of reference failure concerns addressed by at least one metric (ten for account grouping, six each for scientific QA and inherent risk assessment), capturing whether a portfolio spans the failure surface rather than emitting one generic score. As the baselines emit a single judge or rubric, we report it descriptively.
 
-\subsubsection{Redundancy}
-Redundancy is the fraction of metric pairs judged to measure substantially the same behavior (lower is better), penalizing portfolios that look broad but repeat one property. It is meaningful only for multi-metric portfolios: single-judge baselines (the DynamicRubric variants) are trivially non-redundant, which we mark explicitly so the axis is not misread as an advantage.
+\paragraph{Coverage} It is the fraction of a fixed, domain-specific list of reference failure concerns addressed by at least one metric (ten for account grouping, six each for scientific QA and inherent risk assessment), capturing whether a portfolio spans the failure surface rather than emitting one generic score.
 
-\subsubsection{Degradation sensitivity}
-This is the \emph{sensitivity} measure of \citet{autometrics}'s construct-validity
-robustness check: whether a metric assigns lower scores to synthetically degraded
-outputs (we corrupt 10 rows over five severity levels per domain).
+% \subsubsection{Grounding}
+
+% Grounding measures how concretely a metric refers to implementation artifacts---named modules, fields, rules, branches, or source-code behavior---rather than generic evaluation language, on a $[0,1]$ scale (higher is stronger). It reflects Litmus's source-code-grounded design goal; output-only baselines lack access to such artifacts, so this axis describes artifact specificity rather than a baseline deficiency.
+
+\paragraph{Grounding} This measures how concretely a metric refers to implementation artifacts, named modules, fields, rules, branches, or source-code behavior, rather than generic evaluation language, on a $[0,1]$ scale (higher is stronger).
+
+% \subsubsection{Redundancy}
+
+% Redundancy is the fraction of metric pairs judged to measure substantially the same behavior (lower is better), penalizing portfolios that look broad but repeat one property. It is meaningful only for multi-metric portfolios: single-judge baselines (the DynamicRubric variants) are trivially non-redundant, which we mark explicitly so the axis is not misread as an advantage.
+
+\paragraph{Redundancy} This is the fraction of metric pairs judged to measure substantially the same behavior (lower is better), penalizing portfolios that look broad but repeat one property. It is meaningful only for multi-metric portfolios; single-judge baselines (the DynamicRubric variants) are trivially non-redundant, which we mark explicitly.
+
+% \subsubsection{Degradation sensitivity}
+
+\paragraph{Degradation sensitivity} This is the sensitivity measure of \emph{Autometric}'s construct-validity robustness check: whether a metric assigns lower scores to synthetically degraded outputs (we corrupt 10 rows over five severity levels per domain).
+
+
 
 \section{Results}
 \label{sec:results}
 
-\begin{table*}[t!]
-\centering
-\setlength{\tabcolsep}{5pt}
-\begin{tabular}{lcccccc}
-\toprule
-System & Cov.\ $\uparrow$ & Ground.\ $\uparrow$ & Redund.\ $\downarrow$ & Valid.\ $\tau\uparrow$ & Valid.\ $\rho\uparrow$ & Deg.\ ind.\ $\uparrow$ \\
-\midrule
-\multicolumn{7}{l}{\emph{P1: Account grouping (financial), $n{=}112$}}\\
-AutoMetrics & 0.30 & 0.41 & 0.14 & 0.30 & 0.34 & 0.54 \\
-DynRub-\textsc{Inst} & 0.40 & 0.15 & \textbf{0.00} & 0.40 & 0.45 & 0.71 \\
-DynRub-\textsc{DS} & 0.40 & 0.35 & \textbf{0.00} & 0.25 & 0.27 & 0.52 \\
-DynRub-\textsc{FT} & 0.40 & 0.35 & \textbf{0.00} & 0.41 & 0.47 & 0.68 \\
-\textbf{Litmus (ours)} & \textbf{0.80} & \textbf{0.45} & 0.02 & \textbf{0.49} & \textbf{0.51} & \textbf{0.77} \\
-\midrule
-\multicolumn{7}{l}{\emph{P2: Scientific QA (LitQA2), $n{=}58$}}\\
-AutoMetrics & 0.67 & 0.19 & 0.14 & 0.68 & 0.69 & 0.92 \\
-DynRub-\textsc{Inst} & 0.83 & 0.15 & \textbf{0.00} & $-0.06$ & $-0.06$ & \textbf{0.95} \\
-DynRub-\textsc{DS} & 0.67 & \textbf{0.35} & \textbf{0.00} & $-0.12$ & $-0.12$ & \textbf{0.95} \\
-DynRub-\textsc{FT} & \textbf{1.00} & \textbf{0.35} & \textbf{0.00} & 0.27 & 0.27 & \textbf{0.95} \\
-\textbf{Litmus (ours)} & \textbf{1.00} & 0.32 & 0.01 & \textbf{0.71} & \textbf{0.72} & 0.94 \\
-\midrule
-\multicolumn{7}{l}{\emph{P3: Inherent risk assessment (IRF), $n{=}112$}}\\
-AutoMetrics & 0.83 & 0.16 & 0.07 & 0.25 & 0.31 & 0.71 \\
-DynRub-\textsc{Inst} & 0.83 & 0.15 & \textbf{0.00} & 0.09 & 0.11 & 0.65 \\
-DynRub-\textsc{DS} & 0.00 & 0.35 & \textbf{0.00} & 0.25 & 0.28 & 0.49 \\
-DynRub-\textsc{FT} & 0.83 & 0.35 & \textbf{0.00} & 0.21 & 0.25 & 0.82 \\
-\textbf{Litmus (ours)} & \textbf{0.83} & \textbf{0.42} & 0.05 & \textbf{0.27} & \textbf{0.32} & \textbf{0.84} \\
-\bottomrule
-\end{tabular}
-\caption{Multi-axis comparison across three pipelines. Arrows indicate the
-preferred direction; bold marks the best value within each panel. Cov.~=~concern
-coverage; Ground.~=~grounding/specificity; Redund.~=~redundancy; Valid.~$\tau$/$\rho$~=~validity
-(Kendall $\tau$, Spearman $\rho$ vs.\ the per-row quality label); Deg.\ ind.~=~individual
-degradation sensitivity. All values are single-pass point estimates (temperature~0)
-under the shared protocol.\footnote{For account grouping we additionally verified
-run-to-run stability over three passes; validity CV is $1.1\%$ (AutoMetrics) and
-$6.0\%$ (Litmus).} Coverage, grounding, and redundancy are LLM-assessed (see
-Section~\ref{sec:limitations}).}
-\label{tab:main}
-\end{table*}
+% \begin{table*}[t!]
+% \centering
+% \setlength{\tabcolsep}{5pt}
+% \begin{tabular}{lcccccc}
+% \toprule
+% System & Cov.\ $\uparrow$ & Ground.\ $\uparrow$ & Redund.\ $\downarrow$ & Valid.\ $\tau\uparrow$ & Valid.\ $\rho\uparrow$ & Deg.\ ind.\ $\uparrow$ \\
+% \midrule
+% \multicolumn{7}{l}{\emph{P1: Account grouping (financial), $n{=}112$}}\\
+% AutoMetrics & 0.30 & 0.41 & 0.14 & 0.30 & 0.34 & 0.54 \\
+% DynRub-\textsc{Inst} & 0.40 & 0.15 & \textbf{0.00} & 0.40 & 0.45 & 0.71 \\
+% DynRub-\textsc{DS} & 0.40 & 0.35 & \textbf{0.00} & 0.25 & 0.27 & 0.52 \\
+% DynRub-\textsc{FT} & 0.40 & 0.35 & \textbf{0.00} & 0.41 & 0.47 & 0.68 \\
+% \textbf{Litmus (ours)} & \textbf{0.80} & \textbf{0.45} & 0.02 & \textbf{0.49} & \textbf{0.51} & \textbf{0.77} \\
+% \midrule
+% \multicolumn{7}{l}{\emph{P2: Scientific QA (LitQA2), $n{=}58$}}\\
+% AutoMetrics & 0.67 & 0.19 & 0.14 & 0.68 & 0.69 & 0.92 \\
+% DynRub-\textsc{Inst} & 0.83 & 0.15 & \textbf{0.00} & $-0.06$ & $-0.06$ & \textbf{0.95} \\
+% DynRub-\textsc{DS} & 0.67 & \textbf{0.35} & \textbf{0.00} & $-0.12$ & $-0.12$ & \textbf{0.95} \\
+% DynRub-\textsc{FT} & \textbf{1.00} & \textbf{0.35} & \textbf{0.00} & 0.27 & 0.27 & \textbf{0.95} \\
+% \textbf{Litmus (ours)} & \textbf{1.00} & 0.32 & 0.01 & \textbf{0.71} & \textbf{0.72} & 0.94 \\
+% \midrule
+% \multicolumn{7}{l}{\emph{P3: Inherent risk assessment (IRF), $n{=}112$}}\\
+% AutoMetrics & 0.83 & 0.16 & 0.07 & 0.25 & 0.31 & 0.71 \\
+% DynRub-\textsc{Inst} & 0.83 & 0.15 & \textbf{0.00} & 0.09 & 0.11 & 0.65 \\
+% DynRub-\textsc{DS} & 0.00 & 0.35 & \textbf{0.00} & 0.25 & 0.28 & 0.49 \\
+% DynRub-\textsc{FT} & 0.83 & 0.35 & \textbf{0.00} & 0.21 & 0.25 & 0.82 \\
+% \textbf{Litmus (ours)} & \textbf{0.83} & \textbf{0.42} & 0.05 & \textbf{0.27} & \textbf{0.32} & \textbf{0.84} \\
+% \bottomrule
+% \end{tabular}
+% \caption{Multi-axis comparison across three pipelines. Arrows indicate the
+% preferred direction; bold marks the best value within each panel. Cov.~=~concern
+% coverage; Ground.~=~grounding/specificity; Redund.~=~redundancy; Valid.~$\tau$/$\rho$~=~validity
+% (Kendall $\tau$, Spearman $\rho$ vs.\ the per-row quality label); Deg.\ ind.~=~individual
+% degradation sensitivity. All values are single-pass point estimates (temperature~0)
+% under the shared protocol.\footnote{For account grouping we additionally verified
+% run-to-run stability over three passes; validity CV is $1.1\%$ (AutoMetrics) and
+% $6.0\%$ (Litmus).} Coverage, grounding, and redundancy are LLM-assessed (see
+% Section~\ref{sec:limitations}).}
+% \label{tab:main}
+% \end{table*}
 
-\subsection{Overview}
-Table~\ref{tab:main} collects every axis and Table~\ref{tab:b3} the single-vector
-validity statistic, applied uniformly across the three pipelines (P1: account
-grouping; P2: scientific QA; P3: inherent risk). The pattern is consistent:
-Litmus is the broadest and least redundant portfolio with the strongest label
-validity. It is top or tied on \emph{coverage} across all pipelines and uniquely
-produces per-stage and operational metrics rather than scoring the final output
-alone; its \emph{redundancy} is near zero throughout, well below AutoMetrics; and
-on \emph{grounding} it leads on P1 and P3, trailing only slightly on P2
+
+\paragraph{}
+Because every Litmus metric is conditioned on the recovered component graph, we
+check that graph rather than assume it: for the scientific-QA pipeline (PaperQA2),
+Litmus recovers a 30-node graph that is 65\% edge-verified against the tree-sitter
+call graph, maps every recovered module to real code (coverage F1 1.00, zero
+phantoms), and earns an adversarial-critic confidence of 0.78
+(Table~\ref{tab:archfidelity-pqa}, Appendix~\ref{app:arch})---so its metrics rest
+on a graph grounded in resolvable code rather than assumed. 
+
+On this footing, the
+pattern across the three pipelines (P1: account grouping; P2: scientific QA; P3:
+inherent risk assessment) is consistent: Litmus is the broadest and least
+redundant portfolio with the strongest label validity. It is top or tied on
+\emph{coverage} across all pipelines and uniquely produces per-stage and
+operational metrics rather than scoring the final output alone; its
+\emph{redundancy} is near zero throughout, well below AutoMetrics; and on
+\emph{grounding} it leads on P1 and P3, trailing only slightly on P2
 (Table~\ref{tab:main}). Despite using zero labels at design time, Litmus attains
 the strongest label agreement on all three pipelines ($\rho=0.51, 0.72, 0.32$),
 ahead of every baseline including the label-fitted AutoMetrics; the stitched
-single-vector statistic preserves this ranking, and bootstrap CIs
-(Table~\ref{tab:b3}) place Litmus first and individually significant throughout
-($p<0.001$), though on P1 and P3 its interval overlaps the strongest baseline, so
-we claim a favorable ranking under the zero-label constraint rather than a
-uniformly significant margin. Litmus's judges are also among the most sensitive
-to corrupted outputs (tied with the rubric systems on P2), reacting to
-degradation at least as strongly as every baseline---making it the only portfolio
-strong on both validity and degradation sensitivity across pipelines.
+single-vector statistic preserves this ranking, with Litmus first and
+individually significant throughout ($p<0.001$), though on P1 and P3 its interval
+overlaps the strongest baseline, so we claim a favorable ranking under the
+zero-label constraint rather than a uniformly significant margin. Litmus's judges
+are also among the most sensitive to corrupted outputs (tied with the rubric
+systems on P2), reacting to degradation at least as strongly as every
+baseline---making it the only portfolio strong on both validity and degradation
+sensitivity across pipelines.
 
 % \subsection{Design-level axes}
 % \label{sec:design-axes}
@@ -444,9 +530,9 @@ strong on both validity and degradation sensitivity across pipelines.
 % \label{sec:design-axes}
 % Litmus is the top or tied-top portfolio on \emph{coverage} across all three pipelines (0.80, 1.00, 0.83; Table~\ref{tab:main}), uniquely producing per-stage and operational metrics rather than scoring the final output alone. Its \emph{redundancy} is near zero throughout (0.02, 0.01, 0.05), well below AutoMetrics (0.14, 0.14, 0.07), while the single-judge DynamicRubric variants are trivially non-redundant. On \emph{grounding} Litmus leads on P1 and P3 (0.45, 0.42) and trails only slightly on P2 (0.32 vs.\ 0.35 for the single-metric rubric systems, which describe one narrowly scoped judge). The redundancy gap is structural: Litmus's branch-scoped judges cover disjoint branches and so measure distinct behaviors, whereas AutoMetrics' metrics are strongly inter-correlated and collapse onto a single latent factor.
 
-\subsection{Is the reconstruction trustworthy?}
-\label{sec:recon-trust}
-Because every Litmus metric is conditioned on the recovered component graph, we check that graph rather than assume it. For the scientific-QA pipeline (PaperQA2), Litmus recovers a 30-node graph that is 65\% edge-verified against the tree-sitter call graph, maps every recovered module to real code (coverage F1 1.00, zero phantoms), and earns an adversarial-critic confidence of 0.78---so its metrics rest on a graph grounded in resolvable code rather than assumed. Full fidelity statistics are reported in Table~\ref{tab:archfidelity-pqa} (Appendix~\ref{app:arch}).
+% \subsection{Is the reconstruction trustworthy?}
+% \label{sec:recon-trust}
+% As every Litmus metric is conditioned on the recovered component graph, we check that graph rather than assume it. For the scientific-QA pipeline (PaperQA2), Litmus recovers a 30-node graph that is 65\% edge-verified against the tree-sitter call graph, maps every recovered module to real code (coverage F1 1.00, zero phantoms), and earns an adversarial-critic confidence of 0.78---so its metrics rest on a graph grounded in resolvable code rather than assumed. Full fidelity statistics are reported Appendix~\ref{app:arch}.
 % check that graph rather than assume it. For the scientific-QA pipeline
 % (PaperQA2), Litmus recovers a \textbf{30}-node component graph whose data-flow
 % edges are \textbf{65\%} verified against the tree-sitter call graph, and against
@@ -542,25 +628,17 @@ Because every Litmus metric is conditioned on the recovered component graph, we 
 \label{sec:conclusion}
 
 We reframed automatic metric design as \emph{goal elicitation by interrogation}:
-rather than selecting metrics first, Litmus interrogates an AI pipeline's source
-code and its practitioner to make the evaluation target explicit, then admits,
-rejects, or re-scopes each candidate against the resolved constraints. Across
-three real pipelines from different domains---account grouping, scientific QA, and
-inherent risk assessment---this zero-label procedure consistently yields broader
-concern coverage, near-zero redundancy, and the strongest label validity, ahead of
-label-fitted and rubric-generating baselines tuned to the final output. That it
-ranks first on validity in all three settings while the baselines swing across
-domains indicates the advantage comes from design-time elicitation rather than
-tuning to any one artifact: a justified, per-stage portfolio can be produced
-directly from code before any labeling effort.
-
-Several directions remain. Our quantitative evidence uses a single judge-model
-family; extending across families would separate the method's contribution from
-any single assessor's biases. The clarification channel is established here at the
-specification level, so a human study---testing whether practitioner answers
-measurably change the resulting metrics and decisions---would establish its
-end-to-end benefit. Finally, broadening to more pipelines and domains would test
-how well design-time elicitation generalizes.
+rather than selecting metrics first, Litmus interrogates a pipeline's source code
+and its practitioner to make the evaluation target explicit, then admits, rejects,
+or re-scopes each candidate against the resolved constraints. Across three
+domains---account grouping, scientific QA, and inherent risk assessment---this
+zero-label procedure consistently yields broader coverage, near-zero redundancy,
+and the strongest label validity, ahead of label-fitted and rubric-generating
+baselines; that it ranks first on validity everywhere while baselines swing across
+domains points to design-time elicitation, not artifact-specific tuning. Key next
+steps are multi-judge-family replication to isolate the method from assessor bias,
+a human study of whether practitioner answers measurably change the resulting
+metrics, and broader pipelines to test generalization.
 
 \section{Limitations}
 \label{sec:limitations}
