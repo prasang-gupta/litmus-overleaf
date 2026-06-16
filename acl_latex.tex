@@ -166,10 +166,11 @@ Mainstream question generation (QG/NQG) generates \emph{answerable comprehension
 Recent systems automate parts of evaluation construction. \emph{AutoMetrics} takes outputs plus labels and fits a single runnable holistic judge---a metric \emph{implementation} system \citep{autometrics}. \emph{DynamicRubric} \citep{wangblanco2026dynamic} has the judge generate its own rubric and then score, in per-instance (\textsc{-Inst}) and dataset-wide (\textsc{-DS}) variants, with a DPO-fine-tuned generator variant (\textsc{-FineTuned}). Both assume the evaluation \emph{target} is given and focus on the final output. Litmus instead \emph{elicits} the target first and designs a per-stage portfolio from source code with no labels. This distinction is especially important for production AI pipelines, where failures may arise in intermediate components and where monitoring requires metrics that are traceable to system behavior.
 }
 
+\color{blue}
 \section{The Litmus System}
 \label{sec:litmus}
 
-\subsection{3.1 Overview}
+\subsection{Overview}
 Litmus takes a software repository as input and produces a small portfolio of justified evaluation and monitoring metrics. The key challenge is that metric choice cannot be derived from code structure alone. Source code can reveal components, data flows, retrieval paths, fallback logic and calls to AI services, but it often cannot determine the intended behavior of those components, the acceptable failure modes, the available evidence for measurement, or even the direction in which a metric should improve.
 
 Litmus addresses this gap by treating the metric design as a constrained synthesis problem. It first reconstructs an evidence-grounded architecture, then maps components to evaluation patterns, interrogates unresolved assumptions, and finally designs metrics that are traceable to both code evidence and confirmed constraints.
@@ -188,22 +189,50 @@ Litmus addresses this gap by treating the metric design as a constrained synthes
   \label{fig:pipeline}
 \end{figure*}
 
-\subsection{3.2 Architecture Reconstruction}
+\subsection{Architecture Reconstruction}
 Litmus begins by constructing evidence-grounded representation of the repository. A deterministic scanner parses the codebase, builds import and symbol/call graphs, computes centrality scores, and selects salient files for LLM analysis. Tree-sitter
 An LLM then synthesizes an 8--20 node component graph describing the system's major modules, their roles, AI capabilities, and associated risk surfaces. This graph is not accepted without review. To reduce over-interpretation, an adversarial critic checks the proposed graph against code evidence, pruning phantom components, and flagging potentially missed ones. The result is a repository-level architecture that is both structural (rooted in dependency and call relationships) and sematic (components are labeled with their functional roles).
 
-\subsection{3.3 Pattern-Based Metric Search Space}
+\subsection{Pattern-Based Metric Search Space}
 After reconstructing the architecture, Litmus maps each component to an evaluation-taxonomy. The taxonomy contains pipeline-stage patterns, such as data acquisition, knowledge base, AI core and assurance, as well as cross-cutting strategies such as retrieval-augmentation generation and agentic orchestration. 
 
 This classification does not directly select the final metrics. Instead, it narrows the design space by identifying which families of metrics are plausibly relevant for each component. For example, a retrieval component may activate coverage, grounding, and latency families, whereas an assurance component may activate consistency, escalation, auditability or policy-compliance metrics. Pattern classification therefore serves as an intermediate step between architecture reconstruction and metric design; its suggests candidate directions, but leaves unresolved assumptions for interrogation stage.
 
-\subsection{3.4 Interrogation: Turning Assumptions into Constraints}
-Architecture reconstruction and pattern classification identify what the system appears to do and which metric families may be relevant. They do not, however, settle all of the assumptions required to choose valid metrics. A repository may contain fallback logic without indicating whether fallback should be treated as safe recovery or as quality failure, It amye contain an LLM judge without indictaiton
+\subsection{Interrogation: Turning Assumptions into Constraints}
+Architecture reconstruction and pattern classification identify what the system appears to do and which metric families may be relevant. They do not, however, settle all of the assumptions required to choose valid metrics. A repository may contain fallback logic without indicating whether fallback should be treated as safe recovery or as quality failure. It may contain an LLM judge without indicating whether human lables are available for calibration. It may contain a retrieval component without specifying whether recall, precision, latency or grounding is the dominant operational concern.
 
-    3.4.1 Clarification Questions
-    3.4.2 Validity Questions
-3.5 Metric Design
-3.6 Traceability and Export
+Litmus treats these unknowns as first-class objects in the metric design process. Rather than silently assuming answers, it converts metric-affecting uncertainty into explicit questions. Answers to these questions are recorded as \emph{confirmed facts}: user- or critic-validated constraints that downstream metric design must satisfy. Confirmed facts may determine whether a metric is included, how it is computed, what threshold is appropriate, what data must be instrumented, how multiple signals are aggregated, or which direction indicates improvement.
+
+\subsubsection{Clarification Questions}
+The first interrogation channel consists of clarification questions posed to the user. These questions target under-specified, component-level decisions that can materially change the resulting metrics portfolio. Each clarification questions is emitted with an explicit \emph{metric-impact} statement explaining what the answer would change.
+
+For example, if Litmus detects a fallback path, it may ask whether fallback is intended to represent graceful recovery or an undesirable degradation in system quality. The answer changes the interpretation of a fallback-rate metric: in one setting, a higher rate may indicate appropriate safety behavior; in another, it may indicate reduce task success. Similarly, if Litmus detects a retrieval component, it may ask whether the system prioritizes broad recall, precise grounding, or low-latency responses. The answer determines which metric families should be emphasized and which thresholds are meaningful.
+
+By attaching each question to a component, an unresolved assumptions, and a metric-impact statement, Litmus avoids asking generic clarification questions. A question is useful only if its answer can constrain metric inclusion, exclusion, thresholding, instrumentation, aggregation, or direction of goodness. This mirrors the usefulness-of-answer criterion in clarification-question generation \cite{rao2018learning}
+
+\subsubsection{Validity Questions}
+The second interrogation channel consists of validity questions posed by an adversarial critic over candidate metrics. Whereas clarification questions resolve missing information from the user, validity questions test whether a candidate metric is actually justified by the architecture, the available data, and the confirmed facts.
+
+The critic evaluates each candidate metric along four axes.
+First, \emph{pipeline fit} asks whether the metric evaluates the intended component or behavior rather than a neighboring stage of the system.
+Second, \emph{validity condition} asks when the metric is meaningful and when it may produce misleading conclusions.
+Third, \emph{data assumptions} ask whether the required telemetry, labels, traces, or artifacts are available or can be instrumented.
+Fourth, \emph{direction of goodness} asks whether higher or lower values actually correspond to improvement in the target context.
+
+A metric may be rejected or revised if its assumptions, thresholds, required data, or direction of goodness conflict with confirmed facts. For example, a metric that penalizes fallback frequency may be invalid if the user has confirmed that fallback is the desired behavior for unsafe or low-confidence inputs. Likewise, a judge-agreement metric may be inappropriate if no reference labels or calibration data are available. This validity-checking step operationalizes the recommendation to state clearly what each metric is intended to evaluate \citep{schmidtova2024automatic}.
+
+\subsection{Metric Design} 
+Only after interrogation does Litmus finalize the metric portfolio. The metric designer is conditioned on the reconstructed architecture, the component classifications, and the confirmed facts collected through clarification and validity questions. Its goal is not to emit an exhaustive checklist, but to produce a small number of high-signal metrics for each relevant component.
+
+Litmus supports several metric types. Deterministic checks capture properties that can be computed directly from logs, traces, outputs, or source-code artifacts. LLM-as-judge metrics evaluate qualitative behaviors using a three-level scoring rubric and an evidence-backed rationale. Composite metrics combine multiple signals when no single measurement captures the desired behavior. For each metric, Litmus specifies the evaluated component, the purpose of the metric, the required data, the computation procedure, the direction of goodness, and the conditions under which the metric is valid.
+
+The output of this stage is a justified metric specification rather than a list of metric names. Each metric is linked to the architectural evidence and confirmed assumptions that support it. This makes the portfolio easier to audit: a reader can inspect not only what Litmus recommends measuring, but also why the metric is appropriate for the target system.
+
+\subsection{Traceability and Export}
+The final stage preserves the rationale behind the metric portfolio and exports it for downstream use. Litmus maps evaluation metrics to monitoring counterparts where possible, allowing the same design rationale to carry from offline assessment to production observation. For example, a development-time grounding metric may correspond to a production monitor over retrieval coverage, citation-support rate, or judge-flagged unsupported claims.
+
+The exported artifacts include runnable metric definitions together with traceability links to source-code evidence, component classifications, clarification answers, and validity checks. This traceability is essential for maintaining the portfolio over time: when the codebase changes, Litmus can identify which metrics depend on affected components or assumptions and which parts of the portfolio may need to be revisited.
+
 
 % Litmus transforms a codebase into a justified metric portfolio through a pipeline of LLM agents and deterministic steps as described (Figure\fcolorbox{red}{white}{\ref{fig:pipeline}}). We first outline the overall stages, then concentrate on the interrogation step that motivates our framing.
 
@@ -294,6 +323,7 @@ Architecture reconstruction and pattern classification identify what the system 
 
 % \paragraph{Metric design and export.}
 % Conditioned on the architecture, classification, and confirmed facts, a designer emits up to a few high-signal metrics per component: deterministic checks, LLM-as-judge metrics with a 3-point chain-of-thought rubric, and composite metrics. A traceability step maps evaluation metrics to monitoring counterparts and exports runnable artifacts.
+
 
 \section{Experimental Setup}
 \label{sec:setup}
