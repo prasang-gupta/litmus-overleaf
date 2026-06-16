@@ -207,184 +207,23 @@ Recent systems automate parts of evaluation construction. \emph{AutoMetrics} tak
   \label{fig:pipeline}
 \end{figure*}
 
-% \subsection{Overview}
-% Litmus takes a code repository as input and produces a small portfolio of justified evaluation and monitoring metrics. The key challenge is that metric choice cannot be derived from code structure alone. Source code can reveal components, data flows, retrieval paths, fallback logic and calls to AI services, but it often cannot determine the intended behavior of those components, the acceptable failure modes, the available evidence for measurement, or even the direction in which a metric should improve.
-
-% Litmus addresses this gap by treating the metric design as a constrained synthesis problem. It first reconstructs an evidence-grounded architecture, then maps components to evaluation patterns, interrogates unresolved assumptions, and finally designs metrics that are traceable to both code evidence and confirmed constraints.
-
-\subsection{Overview}
-
-% Litmus takes a code repository as input and produces a small portfolio of justified evaluation and monitoring metrics. The central difficulty is that metric choice cannot be read off code structure alone: source code exposes components, data flows, retrieval paths, fallback logic, and calls to AI services, but rarely reveals the \emph{intended} behavior of those components, their acceptable failure modes, the evidence available for measurement, or even the direction in which a metric should improve.
-
-% Litmus treats metric design as a constrained synthesis problem (Figure~\ref{fig:pipeline}). It reconstructs an evidence-grounded architecture from code, maps each component to candidate evaluation patterns, interrogates the remaining metric-affecting assumptions until they become \emph{confirmed facts}, and only then designs metrics that are traceable to both code evidence and those constraints.
-
-Litmus takes a code repository as input and produces a small portfolio of justified evaluation and monitoring metrics. Because code structure alone cannot determine intended behavior, acceptable failure modes, the available evidence for measurement, or even the direction in which a metric should improve, Litmus treats metric design as a constrained synthesis problem: it reconstructs an evidence-grounded architecture, maps components to evaluation patterns, interrogates unresolved assumptions, and designs metrics that are traceable to both code evidence and confirmed constraints.
+Because code structure alone cannot determine intended behavior, acceptable failure modes, the available evidence for measurement, or even the direction in which a metric should improve, Litmus treats metric design as a constrained synthesis problem, organized into the stages below (Figure~\ref{fig:pipeline}).
 
 \subsection{Architecture Reconstruction}
 
-% Litmus begins by constructing evidence-grounded representation of the repository. A deterministic scanner parses the codebase, builds import and symbol/call graphs, computes centrality scores, and selects salient files for LLM analysis. An LLM then synthesizes an 8--20 node component graph describing the system's major modules, their roles, AI capabilities, and associated risk surfaces. To reduce over-interpretation, an adversarial critic checks the proposed graph against code evidence, pruning phantom components, and flagging potentially missed ones. The result is a repository-level architecture that is both structural (rooted in dependency and call relationships) and sematic (components are labeled with their functional roles).
-
 Litmus begins by constructing an evidence-grounded representation of the repository. A deterministic scanner parses the codebase, builds import and symbol/call graphs, computes centrality scores, and selects salient files for LLM analysis. An LLM then synthesizes an 8--20 node component graph describing the system's major modules, their roles, AI capabilities, and associated risk surfaces, and an adversarial critic checks it against code evidence, pruning phantom components and flagging missed ones, to reduce over-interpretation. The result is a repository-level architecture that is both structural (rooted in dependency and call relationships) and semantic (components are labeled with their functional roles); full prompts are given in Appendices~\ref{app:arch} and~\ref{app:impl-arch}.
 
-% \subsection{Pattern-Based Metric Search Space}
-% After reconstructing the architecture, Litmus maps each component to an evaluation-taxonomy. The taxonomy contains pipeline-stage patterns, such as data acquisition, knowledge base, AI core and assurance, as well as cross-cutting strategies such as retrieval-augmentation generation and agentic orchestration. 
-
-% This classification does not directly select the final metrics. Instead, it narrows the design space by identifying which families of metrics are plausibly relevant for each component. For example, a retrieval component may activate coverage, grounding, and latency families, whereas an assurance component may activate consistency, escalation, auditability or policy-compliance metrics. Pattern classification therefore serves as an intermediate step between architecture reconstruction and metric design; its suggests candidate directions, but leaves unresolved assumptions for interrogation stage.
 \subsection{Pattern-Based Metric Search Space}
+
 Litmus then maps each component to an evaluation taxonomy of pipeline-stage patterns (data acquisition, knowledge base, AI core, assurance) and cross-cutting strategies (retrieval-augmented generation, agentic orchestration). This does not select final metrics; it narrows the design space by flagging which metric families are plausibly relevant per component---e.g., a retrieval component activates coverage, grounding, and latency families. Pattern classification thus suggests candidate directions but leaves the underlying assumptions for the interrogation stage.
 
 \subsection{Interrogation: Turning Assumptions into Constraints}
-% Architecture reconstruction and pattern classification reveal what the system appears to do and which metric families may be relevant, but not the assumptions needed to choose valid metrics: a repository may contain fallback logic without saying whether fallback is safe recovery or quality failure, an LLM judge without indicating whether calibration labels exist, or a retrieval component without specifying whether recall, precision, latency, or grounding dominates. Litmus treats these unknowns as first-class objects, converting metric-affecting uncertainty into explicit questions whose answers become \emph{confirmed facts}--- user- or critic-validated constraints that govern whether a metric is included, how it is computed and thresholded, what data is instrumented, how signals aggregate, and which direction indicates improvement.
-
-% Litmus interrogates along two channels. \emph{Clarification questions} ask the practitioner about under-specified, component-level decisions, each emitted with a metric-impact statement of what its answer would change. \emph{Validity questions} come from an adversarial critic that tests each candidate on four axes--- \emph{pipeline fit}, \emph{validity conditions}, \emph{data assumptions}, and \emph{direction of goodness}---rejecting or re-scoping a metric when these conflict with a confirmed fact; e.g., a metric penalizing fallback frequency is rejected once the practitioner confirms fallback is the desired behavior on low-confidence
-% inputs.
 
 Architecture reconstruction and pattern classification identify what the system appears to do and which metric families may be relevant, but they do not settle the assumptions required to choose valid metrics. Litmus treats these unknowns as first-class objects: rather than silently assuming answers, it converts metric-affecting uncertainty into explicit questions whose answers are recorded as \emph{confirmed facts}---user- or critic-validated constraints that downstream metric design must satisfy. Confirmed facts may determine whether a metric is included, how it is computed and thresholded, what data must be instrumented, how multiple signals are aggregated, or which direction indicates improvement.
 
-% \subsection{Interrogation: Turning Assumptions into Constraints}
-% Architecture reconstruction and pattern classification identify what the system appears to do and which metric families may be relevant. They do not, however, settle all of the assumptions required to choose valid metrics. A repository may contain fallback logic without indicating whether fallback should be treated as safe recovery or as quality failure. It may contain an LLM judge without indicating whether human lables are available for calibration. It may contain a retrieval component without specifying whether recall, precision, latency or grounding is the dominant operational concern.
-
-% Litmus treats these unknowns as first-class objects in the metric design process. Rather than silently assuming answers, it converts metric-affecting uncertainty into explicit questions. Answers to these questions are recorded as \emph{confirmed facts}: user- or critic-validated constraints that downstream metric design must satisfy. Confirmed facts may determine whether a metric is included, how it is computed, what threshold is appropriate, what data must be instrumented, how multiple signals are aggregated, or which direction indicates improvement.
-
-% \subsubsection{Clarification Questions}
-% The first interrogation channel consists of clarification questions posed to the user. These questions target under-specified, component-level decisions that can materially change the resulting metrics portfolio. Each clarification questions is emitted with an explicit metric-impact statement explaining what the answer would change.
-
-% For example, if Litmus detects a fallback path, it may ask whether fallback is intended to represent graceful recovery or an undesirable degradation in system quality. The answer changes the interpretation of a fallback-rate metric: in one setting, a higher rate may indicate appropriate safety behavior; in another, it may indicate reduce task success. Similarly, if Litmus detects a retrieval component, it may ask whether the system prioritizes broad recall, precise grounding, or low-latency responses. The answer determines which metric families should be emphasized and which thresholds are meaningful.
-
-% By attaching each question to a component, an unresolved assumptions, and a metric-impact statement, Litmus avoids asking generic clarification questions. A question is useful only if its answer can constrain metric inclusion, exclusion, thresholding, instrumentation, aggregation, or direction of goodness.
-
-% \subsubsection{Validity Questions}
-% The second interrogation channel consists of validity questions posed by an adversarial critic over candidate metrics. Whereas clarification questions resolve missing information from the user, validity questions test whether a candidate metric is actually justified by the architecture, the available data, and the confirmed facts.
-
-% The critic evaluates each candidate metric along four axes.
-% First, \emph{pipeline fit} asks whether the metric evaluates the intended component or behavior rather than a neighboring stage of the system.
-% Second, \emph{validity condition} asks when the metric is meaningful and when it may produce misleading conclusions.
-% Third, \emph{data assumptions} ask whether the required telemetry, labels, traces, or artifacts are available or can be instrumented.
-% Fourth, \emph{direction of goodness} asks whether higher or lower values actually correspond to improvement in the target context.
-
-% A metric may be rejected or revised if its assumptions, thresholds, required data, or direction of goodness conflict with confirmed facts. For example, a metric that penalizes fallback frequency may be invalid if the user has confirmed that fallback is the desired behavior for unsafe or low-confidence inputs. Likewise, a judge-agreement metric may be inappropriate if no reference labels or calibration data are available.
-
-% \subsection{Metric Design} 
-% Only after interrogation does Litmus finalize the metric portfolio. The metric designer is conditioned on the reconstructed architecture, the component classifications, and the confirmed facts collected through clarification and validity questions. Its goal is not to emit an exhaustive checklist, but to produce a small number of high-signal metrics for each relevant component.
-
-% Litmus supports several metric types. Deterministic checks capture properties that can be computed directly from logs, traces, outputs, or source-code artifacts. LLM-as-judge metrics evaluate qualitative behaviors using a three-level scoring rubric and an evidence-backed rationale. Composite metrics combine multiple signals when no single measurement captures the desired behavior. For each metric, Litmus specifies the evaluated component, the purpose of the metric, the required data, the computation procedure, the direction of goodness, and the conditions under which the metric is valid.
-
-% The output of this stage is a justified metric specification rather than a list of metric names. Each metric is linked to the architectural evidence and confirmed assumptions that support it. This makes the portfolio easier to audit: a reader can inspect not only what Litmus recommends measuring, but also why the metric is appropriate for the target system.
-
-% \subsection{Traceability and Export}
-% The final stage preserves the rationale behind the metric portfolio and exports it for downstream use. Litmus maps evaluation metrics to monitoring counterparts where possible, allowing the same design rationale to carry from offline assessment to production observation. For example, a development-time grounding metric may correspond to a production monitor over retrieval coverage, citation-support rate, or judge-flagged unsupported claims.
-
-% The exported artifacts include runnable metric definitions together with traceability links to source-code evidence, component classifications, clarification answers, and validity checks. This traceability is essential for maintaining the portfolio over time: when the codebase changes, Litmus can identify which metrics depend on affected components or assumptions and which parts of the portfolio may need to be revisited.
 \subsection{Metric Design and Export}
-Only after interrogation does Litmus finalize the portfolio. The metric designer is
-conditioned on the reconstructed architecture, the component classifications, and
-the confirmed facts; its goal is not an exhaustive checklist but a small number of
-high-signal metrics per relevant component. Litmus supports deterministic checks
-(properties computable directly from logs, or source-code
-artifacts), LLM-as-judge metrics (qualitative behaviors scored on a five-level
-rubric with an evidence-backed rationale), and composite metrics (multiple signals
-combined when no single measurement suffices). Each metric specifies its evaluated
-component, purpose, required data, computation procedure, direction of goodness,
-and validity conditions.
 
-The result is a justified metric \emph{specification} rather than a list of names:
-every metric is linked to the architectural evidence and confirmed facts that
-support it, so a reader can audit not only what Litmus recommends measuring but why
-it is appropriate. Litmus then exports runnable metric definitions with this
-traceability and, where possible, maps each evaluation metric to a production
-monitoring counterpart, so the same rationale carries from offline design to
-deployment and to maintenance as the codebase evolves.
-
-% Litmus transforms a codebase into a justified metric portfolio through a pipeline of LLM agents and deterministic steps as described (Figure\fcolorbox{red}{white}{\ref{fig:pipeline}}). We first outline the overall stages, then concentrate on the interrogation step that motivates our framing.
-
-% \begin{figure*}[t]
-% \centering
-% \resizebox{\textwidth}{!}{%
-% \begin{tikzpicture}[
-%   font=\footnotesize, >={Stealth[length=2mm]},
-%   io/.style={draw, rounded corners=1.5pt, align=center, minimum height=12mm,
-%              text width=20mm, fill=gray!8, thick},
-%   stage/.style={draw, rounded corners, align=center, minimum height=12mm,
-%              text width=21mm, fill=blue!6, thick},
-%   qbox/.style={draw, rounded corners, align=center, minimum height=11mm,
-%              text width=27mm, fill=orange!16, thick},
-%   actor/.style={draw, ellipse, align=center, minimum height=8mm, inner sep=2pt,
-%              text width=17mm, fill=teal!12},
-%   facts/.style={draw, rounded corners, align=center, minimum height=12mm,
-%              text width=22mm, fill=orange!28, very thick},
-%   gate/.style={draw, diamond, aspect=1.6, align=center, inner sep=1pt,
-%              text width=18mm, fill=red!10, thick},
-%   arr/.style={->, thick},
-%   darr/.style={<->, thick, teal!60!black}
-% ]
-% % --- reconstruction lane ---
-% \node[io] (src) {Source\\code};
-% \node[stage, right=7mm of src] (arch) {Architecture\\synthesis};
-% \node[stage, right=6mm of arch] (cls) {Pattern\\classification};
-%
-% % --- interrogation (core) ---
-% \node[qbox, right=16mm of cls, yshift=7.5mm] (clar) {Clarification\\questions};
-% \node[qbox, below=6mm of clar] (crit) {Adversarial\\validity questions};
-% \node[actor, above=4mm of clar] (user) {Practitioner};
-% \node[actor, below=4mm of crit] (self) {Self-critic};
-%
-% % --- constraints, gate, output ---
-% \node[facts, right=15mm of clar, yshift=-7.5mm] (facts) {Confirmed facts\\(constraints)};
-% \node[gate, right=11mm of facts] (gate) {admit /\\reject /\\re-scope};
-% \node[io, right=11mm of gate, text width=24mm, fill=blue!12] (out)
-%      {Justified per-stage\\metric portfolio\\\scriptsize(+ traceability)};
-%
-% % --- flows ---
-% \draw[arr] (src) -- (arch);
-% \draw[arr] (arch) -- (cls);
-% \draw[arr] (cls.east) -- ++(5mm,0) |- (clar.west);
-% \draw[arr] (cls.east) -- ++(5mm,0) |- (crit.west);
-% \draw[darr] (user) -- (clar);
-% \draw[darr] (self) -- (crit);
-% \draw[arr] (clar.east) -| (facts.north);
-% \draw[arr] (crit.east) -| (facts.south);
-% \draw[arr] (facts) -- (gate);
-% \draw[arr] (gate) -- (out);
-%
-% % --- highlight the interrogation block ---
-% \begin{scope}[on background layer]
-%   \node[draw=orange!70!black, dashed, rounded corners, fill=orange!5,
-%         fit=(user)(self)(clar)(crit), inner sep=3.5mm,
-%         label={[font=\scriptsize\bfseries, text=orange!60!black]above:Interrogation (core)}] {};
-% \end{scope}
-% \end{tikzpicture}%
-% }
-% \caption{The Litmus pipeline. From source code, static analysis and LLM synthesis reconstruct the component architecture and classify each component. Litmus then \emph{interrogates} the artifact along two channels---\emph{clarification} questions to the practitioner and \emph{adversarial validity} questions to a self-critic---whose answers become \emph{confirmed facts}. These constraints gate every candidate metric (admit, reject, or re-scope), yielding a justified per-stage metric portfolio with traceability.}
-% \label{fig:pipeline}
-% \end{figure*}
-
-% \begin{figure*}[t]
-%   \centering
-%   % Adjust width as needed: 0.9\textwidth, \textwidth, etc.
-%   \includegraphics[width=\textwidth]{figures/arch_overview.pdf}
-%   \caption{\scriptsize The Litmus pipeline. Static analysis and LLM synthesis reconstruct a
-%   validated component architecture (Phases~1--2); the system then interrogates the
-%   artifact and the practitioner (Phase~3), and the resulting \emph{confirmed facts}
-%   become hard constraints that admit, reject, or re-scope each candidate metric
-%   (Phase~4) before export (Phase~5).
-%   % The Litmus pipeline. From source code, static analysis and LLM synthesis reconstruct the component architecture and classify each component. Litmus then \emph{interrogates} the artifact along two channels---\emph{clarification} questions to the practitioner and \emph{adversarial validity} questions to a self-critic---whose answers become \emph{confirmed facts}. These constraints gate every candidate metric (admit, reject, or re-scope), yielding a justified per-stage metric portfolio with traceability.
-%   }
-%   \label{fig:pipeline}
-% \end{figure*}
-
-
-% \paragraph{Architecture reconstruction.}
-% A deterministic scanner builds an import graph, computes centrality, and selects salient files; an LLM synthesizes an 8--20 node component graph with roles, AI capabilities, and risk surfaces; an adversarial critic prunes phantom or missed components. This yields a \emph{structural} and \emph{semantic} understanding of the pipeline grounded in code evidence (tree-sitter digests and a symbol/call graph). \textcolor{blue}{Since every metric we design hangs off this graph, we do not ask the reader to take its accuracy on faith: Section~\ref{sec:archfidelity} and Appendix~\ref{app:arch} give the reconstructed graph itself, the share of its edges we can confirm against the real call graph, and a precision/recall check against a human-verified component list.}
-
-% \paragraph{Pattern classification.}
-% Each component is mapped against an evaluation-pattern taxonomy (pipeline stages such as data acquisition, knowledge base, AI core, assurance; and cross-cutting strategies such as RAG and agentic), which determines the reference families considered during design.
-
-% \paragraph{Interrogation (the core of our framing).}
-% Litmus then asks questions along two channels. \emph{Clarification questions} target under-specified, metric-affecting decisions per component; crucially each question is emitted with an explicit \emph{metric-impact} statement of what its answer changes (e.g.,\ ``sets the direction-of-goodness for the fallback-rate metric''). \emph{Validity questions} are posed by an adversarial critic over all candidate metrics along four axes---pipeline fit, validity conditions, data assumptions, and direction of goodness---and may reject a metric whose threshold contradicts a confirmed answer. This operationalizes the survey's central recommendation to ``state clearly what you expect to evaluate with each metric'' \citep{schmidtova2024automatic}, and mirrors the usefulness-of-answer criterion of clarification-question generation \citep{rao2018learning}.
-
-% \paragraph{Metric design and export.}
-% Conditioned on the architecture, classification, and confirmed facts, a designer emits up to a few high-signal metrics per component: deterministic checks, LLM-as-judge metrics with a 3-point chain-of-thought rubric, and composite metrics. A traceability step maps evaluation metrics to monitoring counterparts and exports runnable artifacts.
-
+Only after interrogation does Litmus finalize the portfolio. Conditioned on the reconstructed architecture, the component classifications, and the confirmed facts, the designer emits a small number of high-signal metrics per component: deterministic checks, LLM-as-judge metrics (scored on a five-level rubric with an evidence-backed rationale), and composite metrics; each specifying its evaluated component, purpose, required data, computation, direction of goodness, and validity conditions. The result is a justified specification rather than a list of names: every metric is linked to the evidence and confirmed facts that support it, so the portfolio can be audited. Litmus exports runnable definitions with this traceability and, where possible, maps each evaluation metric to a production monitoring counterpart, carrying the same rationale from offline design to deployment.
 
 \section{Experimental Setup}
 \label{sec:setup}
@@ -443,6 +282,41 @@ Comparison protocol. Litmus is source-code grounded and produces a per-stage met
 \end{table}
 
 Litmus emits portfolios per-stage (14 metrics for account grouping, 13 for scientific QA, 14 for inherent risk assessment) that include monitoring metrics, scope-scoped LLM-as-judge metrics, and code-evaluated checks. The baselines instead score the final output: AutoMetrics~\citep{autometrics} fits a holistic judge from outputs and labels (trained on a separate client/train split, so its validity is out-of-distribution), and DynamicRubric~\citep{wangblanco2026dynamic} generates a 1--5 rubric in three variants---per-instance (\textsc{Inst}), dataset-wide (\textsc{DS}), and DPO-fine-tuned (\textsc{FineTuned}). Unlike Litmus, neither baseline produces per-stage monitoring metrics.
+
+\begin{table}[t!]
+\centering
+\setlength{\tabcolsep}{4pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lccc}
+\toprule
+System & $\rho$ [95\% CI] & $\tau$-b & $p$ \\
+\midrule
+\multicolumn{4}{l}{\emph{P1: Account grouping ($n{=}112$)}}\\
+AutoMetrics & 0.45 [0.29, 0.59] & 0.35 & $<\!0.001$ \\
+DynRub-\textsc{Inst} & 0.45 [0.29, 0.58] & 0.40 & $<\!0.001$ \\
+DynRub-\textsc{DS} & 0.27 [0.08, 0.42] & 0.25 & $0.005$ \\
+DynRub-\textsc{FT} & 0.47 [0.32, 0.60] & 0.41 & $<\!0.001$ \\
+\textbf{Litmus (ours)} & \textbf{0.53 [0.37, 0.67]} & \textbf{0.49} & $<\!0.001$ \\
+\midrule
+\multicolumn{4}{l}{\emph{P2: Scientific QA (LitQA2) ($n{=}58$)}}\\
+AutoMetrics & 0.47 [0.24, 0.63] & 0.42 & $<\!0.001$ \\
+DynRub-\textsc{Inst} & $-0.06$ [$-0.12$, $-0.04$] & $-0.06$ & $1.00$ \\
+DynRub-\textsc{DS} & $-0.12$ [$-0.23$, $-0.09$] & $-0.12$ & $1.00$ \\
+DynRub-\textsc{FT} & 0.27 [$-0.07$, 0.71] & 0.27 & $0.040$ \\
+\textbf{Litmus (ours)} & \textbf{0.72 [0.43, 0.93]} & \textbf{0.71} & $<\!0.001$ \\
+\midrule
+\multicolumn{4}{l}{\emph{P3: Inherent risk assessment (IRF) ($n{=}112$)}}\\
+AutoMetrics & 0.36 [0.18, 0.51] & 0.27 & $<\!0.001$ \\
+DynRub-\textsc{Inst} & 0.11 [$-0.08$, 0.28] & 0.09 & $0.245$ \\
+DynRub-\textsc{DS} & 0.28 [0.10, 0.45] & 0.25 & $0.003$ \\
+DynRub-\textsc{FT} & 0.25 [0.05, 0.42] & 0.21 & $0.008$ \\
+\textbf{Litmus (ours)} & \textbf{0.39 [0.22, 0.52]} & \textbf{0.28} & $<\!0.001$ \\
+\bottomrule
+\end{tabular}%
+}
+\caption{Single-vector validity (B3) across all three pipelines: the stitched per-row score (mean of per-column $z$-scores; branch-disjoint judges stitch to one vector, holistic systems collapse to their $z$-mean composite) correlated with the per-row quality label, with 1000-resample bootstrap 95\% CIs ($\rho$) and 5000-permutation $p$-values (seed 20260615).}
+\label{tab:b3}
+\end{table}
 
 
 % \subsection{Evaluation Axes}
@@ -532,16 +406,24 @@ Section~\ref{sec:limitations}).}
 
 \subsection{Overview}
 Table~\ref{tab:main} collects every axis and Table~\ref{tab:b3} the single-vector
-validity statistic, both under the shared protocol applied uniformly across the
-three pipelines (P1: account grouping, $n{=}112$; P2: scientific QA, $n{=}58$;
-P3: inherent risk assessment, $n{=}112$; single passes, temperature~0). We report
-the design-quality axes (Section~\ref{sec:design-axes}), audit the recovered
-component graph (Section~\ref{sec:recon-trust}), then present validity
-(Section~\ref{sec:validity}) and degradation sensitivity
-(Section~\ref{sec:degradation}). The pattern is consistent across pipelines:
+validity statistic, applied uniformly across the three pipelines (P1: account
+grouping; P2: scientific QA; P3: inherent risk). The pattern is consistent:
 Litmus is the broadest and least redundant portfolio with the strongest label
-validity, while output-only baselines concentrate signal in one final-output
-judge.
+validity. It is top or tied on \emph{coverage} across all pipelines and uniquely
+produces per-stage and operational metrics rather than scoring the final output
+alone; its \emph{redundancy} is near zero throughout, well below AutoMetrics; and
+on \emph{grounding} it leads on P1 and P3, trailing only slightly on P2
+(Table~\ref{tab:main}). Despite using zero labels at design time, Litmus attains
+the strongest label agreement on all three pipelines ($\rho=0.51, 0.72, 0.32$),
+ahead of every baseline including the label-fitted AutoMetrics; the stitched
+single-vector statistic preserves this ranking, and bootstrap CIs
+(Table~\ref{tab:b3}) place Litmus first and individually significant throughout
+($p<0.001$), though on P1 and P3 its interval overlaps the strongest baseline, so
+we claim a favorable ranking under the zero-label constraint rather than a
+uniformly significant margin. Litmus's judges are also among the most sensitive
+to corrupted outputs (tied with the rubric systems on P2), reacting to
+degradation at least as strongly as every baseline---making it the only portfolio
+strong on both validity and degradation sensitivity across pipelines.
 
 % \subsection{Design-level axes}
 % \label{sec:design-axes}
@@ -558,9 +440,9 @@ judge.
 % behaviors, whereas AutoMetrics' metrics are strongly inter-correlated and collapse
 % onto a single latent factor.
 
-\subsection{Design-level axes}
-\label{sec:design-axes}
-Litmus is the top or tied-top portfolio on \emph{coverage} across all three pipelines (0.80, 1.00, 0.83; Table~\ref{tab:main}), uniquely producing per-stage and operational metrics rather than scoring the final output alone. Its \emph{redundancy} is near zero throughout (0.02, 0.01, 0.05), well below AutoMetrics (0.14, 0.14, 0.07), while the single-judge DynamicRubric variants are trivially non-redundant. On \emph{grounding} Litmus leads on P1 and P3 (0.45, 0.42) and trails only slightly on P2 (0.32 vs.\ 0.35 for the single-metric rubric systems, which describe one narrowly scoped judge). The redundancy gap is structural: Litmus's branch-scoped judges cover disjoint branches and so measure distinct behaviors, whereas AutoMetrics' metrics are strongly inter-correlated and collapse onto a single latent factor.
+% \subsection{Design-level axes}
+% \label{sec:design-axes}
+% Litmus is the top or tied-top portfolio on \emph{coverage} across all three pipelines (0.80, 1.00, 0.83; Table~\ref{tab:main}), uniquely producing per-stage and operational metrics rather than scoring the final output alone. Its \emph{redundancy} is near zero throughout (0.02, 0.01, 0.05), well below AutoMetrics (0.14, 0.14, 0.07), while the single-judge DynamicRubric variants are trivially non-redundant. On \emph{grounding} Litmus leads on P1 and P3 (0.45, 0.42) and trails only slightly on P2 (0.32 vs.\ 0.35 for the single-metric rubric systems, which describe one narrowly scoped judge). The redundancy gap is structural: Litmus's branch-scoped judges cover disjoint branches and so measure distinct behaviors, whereas AutoMetrics' metrics are strongly inter-correlated and collapse onto a single latent factor.
 
 \subsection{Is the reconstruction trustworthy?}
 \label{sec:recon-trust}
@@ -592,53 +474,16 @@ Because every Litmus metric is conditioned on the recovered component graph, we 
 % DynamicRubric variants, by contrast, are unstable across domains---their validity
 % swings between pipelines and turns negative on P2, where their rubric scores
 % anti-correlate with answer correctness.
-\subsection{Validity.}
-\label{sec:validity}
-Despite using zero labels at design time, Litmus attains the strongest label
-agreement on all three pipelines ($\rho=0.51, 0.72, 0.32$ for P1/P2/P3), ahead of
-every baseline,including the label-fitted AutoMetrics ($\rho=0.34, 0.69, 0.31$)
-and the DPO-fine-tuned DynamicRubric. The single-vector stitched statistic
-preserves this ranking.Bootstrap CIs (Table~\ref{tab:b3}) confirm Litmus ranks first and is individually significant throughout ($p<0.001$); on P1 and P3 its interval overlaps the
-strongest baseline, so we claim a favorable \emph{ranking} under the zero-label
-constraint rather than a uniformly significant margin. 
-\begin{table}[t!]
-\centering
-\setlength{\tabcolsep}{4pt}
-\resizebox{\columnwidth}{!}{%
-\begin{tabular}{lccc}
-\toprule
-System & $\rho$ [95\% CI] & $\tau$-b & $p$ \\
-\midrule
-\multicolumn{4}{l}{\emph{P1: Account grouping ($n{=}112$)}}\\
-AutoMetrics & 0.45 [0.29, 0.59] & 0.35 & $<\!0.001$ \\
-DynRub-\textsc{Inst} & 0.45 [0.29, 0.58] & 0.40 & $<\!0.001$ \\
-DynRub-\textsc{DS} & 0.27 [0.08, 0.42] & 0.25 & $0.005$ \\
-DynRub-\textsc{FT} & 0.47 [0.32, 0.60] & 0.41 & $<\!0.001$ \\
-\textbf{Litmus (ours)} & \textbf{0.53 [0.37, 0.67]} & \textbf{0.49} & $<\!0.001$ \\
-\midrule
-\multicolumn{4}{l}{\emph{P2: Scientific QA (LitQA2) ($n{=}58$)}}\\
-AutoMetrics & 0.47 [0.24, 0.63] & 0.42 & $<\!0.001$ \\
-DynRub-\textsc{Inst} & $-0.06$ [$-0.12$, $-0.04$] & $-0.06$ & $1.00$ \\
-DynRub-\textsc{DS} & $-0.12$ [$-0.23$, $-0.09$] & $-0.12$ & $1.00$ \\
-DynRub-\textsc{FT} & 0.27 [$-0.07$, 0.71] & 0.27 & $0.040$ \\
-\textbf{Litmus (ours)} & \textbf{0.72 [0.43, 0.93]} & \textbf{0.71} & $<\!0.001$ \\
-\midrule
-\multicolumn{4}{l}{\emph{P3: Inherent risk assessment (IRF) ($n{=}112$)}}\\
-AutoMetrics & 0.36 [0.18, 0.51] & 0.27 & $<\!0.001$ \\
-DynRub-\textsc{Inst} & 0.11 [$-0.08$, 0.28] & 0.09 & $0.245$ \\
-DynRub-\textsc{DS} & 0.28 [0.10, 0.45] & 0.25 & $0.003$ \\
-DynRub-\textsc{FT} & 0.25 [0.05, 0.42] & 0.21 & $0.008$ \\
-\textbf{Litmus (ours)} & \textbf{0.39 [0.22, 0.52]} & \textbf{0.28} & $<\!0.001$ \\
-\bottomrule
-\end{tabular}%
-}
-\caption{Single-vector validity (B3) across all three pipelines: the stitched
-per-row score (mean of per-column $z$-scores; branch-disjoint judges stitch to
-one vector, holistic systems collapse to their $z$-mean composite) correlated
-with the per-row quality label, with 1000-resample bootstrap 95\% CIs ($\rho$)
-and 5000-permutation $p$-values (seed 20260615).}
-\label{tab:b3}
-\end{table}
+% \subsection{Validity.}
+% \label{sec:validity}
+% Despite using zero labels at design time, Litmus attains the strongest label
+% agreement on all three pipelines ($\rho=0.51, 0.72, 0.32$ for P1/P2/P3), ahead of
+% every baseline,including the label-fitted AutoMetrics ($\rho=0.34, 0.69, 0.31$)
+% and the DPO-fine-tuned DynamicRubric. The single-vector stitched statistic
+% preserves this ranking.Bootstrap CIs (Table~\ref{tab:b3}) confirm Litmus ranks first and is individually significant throughout ($p<0.001$); on P1 and P3 its interval overlaps the
+% strongest baseline, so we claim a favorable \emph{ranking} under the zero-label
+% constraint rather than a uniformly significant margin. 
+
 
 % \subsection{Degradation sensitivity.}
 % \label{sec:degradation}
@@ -656,17 +501,17 @@ and 5000-permutation $p$-values (seed 20260615).}
 % pipelines---high degradation sensitivity paired with the top validity ranking.
 % (The corruption ladder is cumulative and per-branch samples are small, so we read
 % absolute sensitivity levels rather than fine-grained differences.)
-\subsection{Degradation sensitivity.}
-\label{sec:degradation}
-Litmus's judges are the most sensitive to corrupted outputs on P1 and P3 (0.77,
-0.84) and essentially tied on P2 (0.94 vs.\ $\approx$0.95), so it reacts to
-degradation at least as strongly as every baseline. The two axes are
-complementary, not interchangeable: DynamicRubric-DS posts high sensitivity on P2
-($\approx$0.95) yet near-worst validity (negative $\tau$), i.e.\ it detects that
-an output is broken without identifying a correct one. Litmus is the only
-portfolio strong on both across pipelines. The corruption ladder is cumulative
-and per-branch samples small, so we read absolute levels rather than fine-grained
-differences.
+% \subsection{Degradation sensitivity.}
+% \label{sec:degradation}
+% Litmus's judges are the most sensitive to corrupted outputs on P1 and P3 (0.77,
+% 0.84) and essentially tied on P2 (0.94 vs.\ $\approx$0.95), so it reacts to
+% degradation at least as strongly as every baseline. The two axes are
+% complementary, not interchangeable: DynamicRubric-DS posts high sensitivity on P2
+% ($\approx$0.95) yet near-worst validity (negative $\tau$), i.e.\ it detects that
+% an output is broken without identifying a correct one. Litmus is the only
+% portfolio strong on both across pipelines. The corruption ladder is cumulative
+% and per-branch samples small, so we read absolute levels rather than fine-grained
+% differences.
 % \section{Conclusion and Future Work}
 % \label{sec:conclusion}
 
