@@ -318,6 +318,27 @@ Grounding $\uparrow$ & 0.377 & 0.393 & $+0.017$ \\
 \label{tab:gate}
 \end{table}
 
+\subsection{Reconstruction Fidelity vs.\ Metric Validity}
+\label{sec:fidelityvalidity}
+We pair each scoreable metric's criterion validity with the host subsystem's reconstruction fidelity (mean per-node critic confidence; Table~\ref{tab:fidelityvalidity}). Aggregate fidelity does not predict validity: P1 has higher edge-verification than P2 ($83\%$ vs.\ $65\%$) yet lower headline validity, and the pooled correlation is near zero (Spearman $-0.06$, $n{=}7$; component-level $-0.50$, $n{=}3$---neither powered). The gate still rejects metrics whose reconstructed responsibility does not support them (retrieval metrics on the PDF reader; Section~\ref{sec:gateablation}), a safeguard against some reconstruction errors. The lowest-confidence P2 node (\texttt{settings-config}, $0.65$) is exactly where the critic flagged the metric scoped there. With only $1$--$4$ scoreable metrics per pipeline we cannot estimate a powered slope; a powered per-component study is left to future work.
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lcccc}
+\toprule
+Pipeline & Edge-ver.\% & Conf.\ & Min & Validity $\rho$ \\
+\midrule
+P1 Acct.\ grouping & 83 & 0.93 & 0.90 & 0.51 \\
+P2 Scientific QA & 65 & 0.83 & 0.65 & 0.72 \\
+P3 Risk assessment & 83 & 0.92 & 0.88 & 0.32 \\
+\bottomrule
+\end{tabular}
+\caption{Reconstruction fidelity vs.\ downstream validity. Edge-verification \% and host-subsystem critic confidence (mean, min) against headline validity $\rho$. P2's $0.83$ is the five-node \texttt{core-qa-engine} mean; whole-graph confidence across all 30 nodes is $0.78$ (Section~\ref{sec:results}). Aggregate fidelity does not track validity (pooled $\rho=-0.06$, $n{=}7$).}
+\label{tab:fidelityvalidity}
+\end{table}
+
 \section{Conclusion and Future Work}
 \label{sec:conclusion}
 
@@ -326,7 +347,7 @@ We reframed automatic metric design as goal elicitation by interrogation: rather
 \section{Limitations}
 \label{sec:limitations}
 
-First, scope. Our \textbf{empirical evaluation} spans three real, code-defined pipelines from different domains---account grouping, scientific QA, and inherent risk assessment---primarily scored by a single judge-model family. We ran a cross-family judge control on the one pipeline with external gold labels (P2), where Litmus's validity ranking holds under two disjoint OpenAI judges (Section~\ref{sec:robustness}); on the proxy-labeled pipelines (P1, P3) judge-system alignment is not ruled out, so those results should still be read as evidence within one assessor family. Litmus itself is pipeline-agnostic, with no assumptions specific to any one domain, and broader multi-judge evaluation remains future work. Second, the systems are not strictly commensurable: Litmus is a zero-label metric-design system, whereas AutoMetrics is label-fitted and DynamicRubric is rubric-generating, and both score only the final output. AutoMetrics is fit on a separate client dataset and evaluated on the held-out validity rows, so its reported figure is already an out-of-distribution estimate rather than an optimistic in-distribution one. We treat this role difference as intentional rather than a confound, but it means absolute numbers should be read as characterizing what each system produces; the defensible claim is the ranking under a shared zero-label, design-time constraint. Third, three of our axes (coverage, grounding, and redundancy) are themselves LLM-assessed by the same model family that powers Litmus, risking judge--system alignment bias \citep{zheng2023judging,panickssery2024llm}; we mitigate this with a broad, fixed set of reference concerns per pipeline, but the absolute scores inherit the assessor's biases and the ranking is again the more defensible claim. Fourth, coverage is monotone in portfolio size---Litmus emits a substantially larger portfolio than the baselines (14 metrics versus 1--8 on account grouping: AutoMetrics emits 8 and DynamicRubric a single holistic rubric score)---and the reference concern lists were authored by us. A size-controlled analysis (Section~\ref{sec:sizecontrolled}) shows the advantage survives capping only on P1. Finally, the clarification-question channel is a design affordance whose end-to-end benefit (practitioner answers measurably changing the resulting metrics) is established here at the specification level and warrants a dedicated human study.
+First, scope. Our \textbf{empirical evaluation} spans three real, code-defined pipelines from different domains---account grouping, scientific QA, and inherent risk assessment---primarily scored by a single judge-model family. We ran a cross-family judge control on the one pipeline with external gold labels (P2), where Litmus's validity ranking holds under two disjoint OpenAI judges (Section~\ref{sec:robustness}); on the proxy-labeled pipelines (P1, P3) judge-system alignment is not ruled out, so those results should still be read as evidence within one assessor family. Litmus itself is pipeline-agnostic, with no assumptions specific to any one domain, and broader multi-judge evaluation remains future work. Second, the systems are not strictly commensurable: Litmus is a zero-label metric-design system, whereas AutoMetrics is label-fitted and DynamicRubric is rubric-generating, and both score only the final output. AutoMetrics is fit on a separate client dataset and evaluated on the held-out validity rows, so its reported figure is already an out-of-distribution estimate rather than an optimistic in-distribution one. We treat this role difference as intentional rather than a confound, but it means absolute numbers should be read as characterizing what each system produces; the defensible claim is the ranking under a shared zero-label, design-time constraint. Third, three of our axes (coverage, grounding, and redundancy) are themselves LLM-assessed by the same model family that powers Litmus, risking judge--system alignment bias \citep{zheng2023judging,panickssery2024llm}; we mitigate this with a broad, fixed set of reference concerns per pipeline, but the absolute scores inherit the assessor's biases and the ranking is again the more defensible claim. Fourth, coverage is monotone in portfolio size---Litmus emits a substantially larger portfolio than the baselines (14 metrics versus 1--8 on account grouping: AutoMetrics emits 8 and DynamicRubric a single holistic rubric score)---and the reference concern lists were authored by us. A size-controlled analysis (Section~\ref{sec:sizecontrolled}) shows the advantage survives capping only on P1. Reconstruction fidelity does not predict downstream validity in this sample (Section~\ref{sec:fidelityvalidity}). Finally, the clarification-question channel is a design affordance whose end-to-end benefit (practitioner answers measurably changing the resulting metrics) is established here at the specification level and warrants a dedicated human study.
 
 \section{Ethical Considerations}
 \label{sec:ethics}
@@ -489,6 +510,9 @@ Per-module F1 (strict)               & 0.64 \\
 \caption{Architecture-reconstruction fidelity for the scientific-QA pipeline (PaperQA2). The seven subsystems are PDF reader plugins, agent orchestration, metadata clients, the core QA engine, the Nemotron reader, contributed sources, and tests. Strict per-module F1 (0.64) is lower than coverage F1 because Litmus clusters the 32 source modules into 30 functional nodes as shown in Figure \ref{fig:archpqa} rather than emitting one node per file. All values are reproducible from the persisted graph and critic annotations (Appendix~\ref{app:arch}).}
 \label{tab:archfidelity-pqa}
 \end{table}
+
+\paragraph{Fidelity vs.\ validity pairing.}
+The $n{=}7$ pooled points in Section~\ref{sec:fidelityvalidity} are the scoreable metrics (non-null criterion validity) across the three pipelines, each paired with its host-subsystem mean critic confidence. Component-level $n{=}3$ is one point per pipeline. For P2 the host is \texttt{core-qa-engine} (five nodes, mean $0.83$); the $0.78$ above is the mean over all 30 nodes.
 
 \paragraph{Reproducing the numbers.}
 The graph and critic annotations are persisted per solution, so these require no new model calls:
