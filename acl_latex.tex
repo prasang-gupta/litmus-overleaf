@@ -242,7 +242,7 @@ We score every system under a single protocol applied uniformly across all three
 \section{Results}
 \label{sec:results}
 
-Because every Litmus metric is conditioned on the recovered component graph, we check that graph rather than assume it: for the scientific-QA pipeline (PaperQA2), Litmus recovers a 30-node graph that is 65\% edge-verified against the tree-sitter call graph, maps every recovered module to real code (coverage F1 1.00, zero phantoms), and earns an adversarial-critic confidence of 0.78 (Table~\ref{tab:archfidelity-pqa}, Appendix~\ref{app:arch})---so its metrics rest on a graph grounded in resolvable code rather than assumed. 
+Because every Litmus metric is conditioned on the recovered component graph, we check that graph rather than assume it. On scientific QA, Litmus recovers a 30-node graph that is 65\% edge-verified, with no phantom modules (Appendix~\ref{app:arch}). 
 
 On this footing, under a zero-label design-time constraint Litmus has the most favorable validity ranking: first on all three pipelines ($\rho=0.51, 0.72, 0.32$), ahead of every baseline including the label-fitted AutoMetrics, decisive on scientific QA and within overlapping intervals of the strongest baseline on P1 and P3 (Table~\ref{tab:main}). The stitched single-vector statistic keeps this order, with Litmus first and individually significant throughout ($p<0.001$). Uncapped coverage is top or tied on every pipeline, but that lead survives a size-matched comparison only on account grouping (Section~\ref{sec:sizecontrolled}). Litmus uniquely produces per-stage and operational metrics rather than scoring the final output alone; its \emph{redundancy} is near zero throughout, well below AutoMetrics; and on \emph{grounding} it leads on P1 and P3, trailing only slightly on P2. Litmus's judges are also among the most sensitive to corrupted outputs---top or tied on degradation on P1 and P3, and on par with the rubric systems on P2 (0.94 vs.\ 0.95)---so it is the only portfolio that is strong on both validity and degradation sensitivity across all three pipelines.
 
@@ -251,9 +251,9 @@ On this footing, under a zero-label design-time constraint Litmus has the most f
 
 \subsection{Cross-Family Judge Control}
 \label{sec:crossfamily}
-To rule out a system being graded by a relative of itself, we re-score the held-out P2 rows---the one pipeline with external gold (LitQA2, $n{=}58$)---with scoring judges from a \emph{different} family (OpenAI GPT-5.5 and, separately, GPT-4o) than the Claude family that powers Litmus, holding the generated metrics, evaluated outputs, and gold labels fixed. The control is applied to \emph{every} LLM-judge system; AutoMetrics is code-based and thus judge-invariant. Litmus stays first and if anything strengthens, its Spearman correlation to the LitQA2 gold rising from $0.72$ under Claude to $0.86$ under either OpenAI judge (Table~\ref{tab:crossfamily}). The DynamicRubric baselines are more judge-sensitive, swinging from slightly negative under Claude to $+0.56$--$0.75$ under the OpenAI judges, so their apparent ordering is largely an artifact of the assessor. Claude and OpenAI scores agree at Spearman $\rho=0.64$, Kendall $\tau=0.63$, Cohen's $\kappa\approx0.5$ at the median split. We scope this control to P2 because it is the only pipeline with external gold, and we do \emph{not} claim judge-invariance on the proxy-labeled P1/P3.
+To rule out a system being graded by a relative of itself, we re-score the held-out P2 rows---the one pipeline with external gold (LitQA2, $n{=}58$)---with OpenAI GPT-5.5 and GPT-4o, holding metrics, outputs, and gold labels fixed. The control covers every LLM-judge system; AutoMetrics is code-based and judge-invariant. Litmus stays first, its Spearman correlation to LitQA2 gold rising from $0.72$ under Claude to $0.86$ under either OpenAI judge (Table~\ref{tab:crossfamily}). The DynamicRubric baselines swing from slightly negative under Claude to $+0.56$--$0.75$ under OpenAI, so their ordering is largely an artifact of the assessor. We do \emph{not} claim judge-invariance on the proxy-labeled P1/P3.
 
-The same worry applies to coverage, grounding, and redundancy, which are LLM-assessed by the family that also powers Litmus. We re-scored all three for every portfolio on all three pipelines under GPT-4o and GPT-5.5, holding the portfolios fixed and running each pipeline's three arms in a single execution (Appendix~\ref{app:axescontrol}). What moves is the calibration, not the ordering: GPT-4o is markedly more generous, lifting AutoMetrics' account-grouping coverage from $0.30$ to $0.80$, yet Litmus stays ahead of AutoMetrics---the only other multi-metric portfolio---on grounding and redundancy in all nine pipeline--judge cells, and is first or tied on coverage in eight of nine. The exception is scientific QA under GPT-5.5, where AutoMetrics addresses all six reference concerns and Litmus five. We read this as rank stability under a change of assessor, not score invariance.
+The same worry applies to coverage, grounding, and redundancy. Re-scoring every portfolio under GPT-4o and GPT-5.5 leaves the ordering intact: Litmus stays ahead of AutoMetrics on grounding and redundancy in all nine pipeline--judge cells, and is first or tied on coverage in eight of nine (Appendix~\ref{app:axescontrol}). Absolute scores shift with the assessor; the ranking does not.
 
 \begin{table}[t]
 \centering
@@ -278,73 +278,20 @@ DynRub-\textsc{FT} & 0.27 & 0.48 & 0.56 \\
 \label{sec:sizecontrolled}
 Coverage grows with portfolio size, and Litmus emits more metrics than the baselines, so part of its coverage lead could be mechanical. We cap Litmus at AutoMetrics' eight metrics and recompute coverage two ways: a critic-verdict-ranked top-$k$ (pass $>$ flag $>$ unscored $>$ reject) and the mean over six random size-eight subsets (Table~\ref{tab:sizecontrolled}). On P1 the gap remains: $0.70$ ranked / $0.65\pm0.08$ random versus AutoMetrics' $0.30$. On P2 the full-size $1.00$ falls to a tie at $0.67$, and P3 is a tie at every size ($0.83$). Only P1 keeps a coverage lead at matched size.
 
-\begin{table}[t]
-\centering
-\small
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{lcccc}
-\toprule
-Pipeline & Full & @8 rank & @8 rand & Auto. \\
-\midrule
-P1 Acct.\ grouping & 0.80 & 0.70 & $0.65{\pm}.08$ & 0.30 \\
-P2 Scientific QA & 1.00 & 0.67 & $0.58{\pm}.32$ & 0.67 \\
-P3 Risk assessment & 0.83 & 0.83 & $0.83{\pm}.00$ & 0.83 \\
-\bottomrule
-\end{tabular}
-\caption{Size-controlled coverage. Litmus full portfolio vs.\ capped to $k{=}8$ (AutoMetrics' size) by verdict-ranking and by random size-8 subsets (mean$\pm$sd), vs.\ AutoMetrics. The coverage advantage survives capping only on P1; P2 and P3 tie at matched size.}
-\label{tab:sizecontrolled}
-\end{table}
-
 \subsection{Adversarial-Validity Gate Ablation}
 \label{sec:gateablation}
-We isolate the adversarial-validity gate on the P2 draft. Of $77$ drafted metrics it rejects $11$ and flags $10$. Removing the rejects leaves coverage unchanged ($1.00$), cuts redundancy by $35\%$ ($0.024\rightarrow0.016$), and raises grounding ($0.377\rightarrow0.393$; Table~\ref{tab:gate}). The rejects are near-duplicate, pipeline-mismatched metrics---\emph{RAG Context Precision} and \emph{RAG Retrieval Recall@K} on the PDF reader, which does no query-time retrieval---and the one scoreable metric is untouched ($\rho=0.72$). This is a single-stage ablation of the already-critiqued portfolio; a full regeneration ablation, and ablations of reconstruction, graph verification, clarification, and downstream metric design, remain future work.
-
-\begin{table}[t]
-\centering
-\small
-\setlength{\tabcolsep}{6pt}
-\begin{tabular}{lccc}
-\toprule
-Axis & Ungated (77) & Gated (66) & $\Delta$ \\
-\midrule
-Coverage $\uparrow$ & 1.000 & 1.000 & $+0.000$ \\
-Redundancy $\downarrow$ & 0.024 & 0.016 & $-35\%$ \\
-Grounding $\uparrow$ & 0.377 & 0.393 & $+0.017$ \\
-\bottomrule
-\end{tabular}
-\caption{Adversarial-validity gate ablation on scientific QA (P2). Counts are over the whole-solution drafted portfolio across all components, not the 13-metric scoped portfolio in Table~\ref{tab:main}. Removing the $11$ rejected metrics (of $77$ drafted; $10$ flagged) cuts redundancy by $35\%$ and raises grounding at no coverage cost; the one scoreable metric is unchanged ($\rho=0.72$).}
-\label{tab:gate}
-\end{table}
+On the P2 draft the gate rejects $11$ of $77$ metrics and flags $10$. Dropping the rejects leaves coverage unchanged ($1.00$), cuts redundancy by $35\%$ ($0.024\rightarrow0.016$), and raises grounding ($0.377\rightarrow0.393$; Table~\ref{tab:gate}). The rejects are pipeline-mismatched (retrieval metrics on a PDF reader that does no query-time retrieval); the one scoreable metric is untouched ($\rho=0.72$).
 
 \subsection{Reconstruction Fidelity vs.\ Metric Validity}
 \label{sec:fidelityvalidity}
-We pair each scoreable metric's criterion validity with the host subsystem's reconstruction fidelity (mean per-node critic confidence; Table~\ref{tab:fidelityvalidity}). Aggregate fidelity does not predict validity: P1 has higher edge-verification than P2 ($83\%$ vs.\ $65\%$) yet lower headline validity, and the pooled correlation is near zero (Spearman $-0.06$, $n{=}7$; component-level $-0.50$, $n{=}3$---neither powered). The gate still rejects metrics whose reconstructed responsibility does not support them (retrieval metrics on the PDF reader; Section~\ref{sec:gateablation}), a safeguard against some reconstruction errors. The lowest-confidence P2 node (\texttt{settings-config}, $0.65$) is exactly where the critic flagged the metric scoped there. With only $1$--$4$ scoreable metrics per pipeline we cannot estimate a powered slope; a powered per-component study is left to future work.
+We pair each scoreable metric's validity with the host subsystem's reconstruction fidelity (Table~\ref{tab:fidelityvalidity}). Aggregate fidelity does not predict validity: P1 has higher edge-verification than P2 ($83\%$ vs.\ $65\%$) yet lower headline validity, and the pooled correlation is near zero (Spearman $-0.06$, $n{=}7$). The gate still drops metrics whose reconstructed responsibility cannot support them (Section~\ref{sec:gateablation}). With only $1$--$4$ scoreable metrics per pipeline a powered slope is not estimable.
 
-\begin{table}[t]
-\centering
-\small
-\setlength{\tabcolsep}{3pt}
-\begin{tabular}{lcccc}
-\toprule
-Pipeline & Edge-ver.\% & Conf.\ & Min & Validity $\rho$ \\
-\midrule
-P1 Acct.\ grouping & 83 & 0.93 & 0.90 & 0.51 \\
-P2 Scientific QA & 65 & 0.83 & 0.65 & 0.72 \\
-P3 Risk assessment & 83 & 0.92 & 0.88 & 0.32 \\
-\bottomrule
-\end{tabular}
-\caption{Reconstruction fidelity vs.\ downstream validity. Edge-verification \% and host-subsystem critic confidence (mean, min) against headline validity $\rho$. P2's $0.83$ is the five-node \texttt{core-qa-engine} mean; whole-graph confidence across all 30 nodes is $0.78$ (Section~\ref{sec:results}). Aggregate fidelity does not track validity (pooled $\rho=-0.06$, $n{=}7$).}
-\label{tab:fidelityvalidity}
-\end{table}
-
-\subsection{When Does Elicitation Help?}
-\label{sec:whenhelps}
-These checks are consistent with a branch-diversity hypothesis: elicitation helps most when a pipeline has multiple decision paths whose intended behavior is not recoverable from code---P2's abstention semantics, fallback parsers, and recall-versus-precision preference---and least when one dominant branch carries the signal (P1 and P3), where the validity intervals overlap the strongest baseline. We treat this as a hypothesis consistent with the three pipelines, not an established predictor.
+These checks are consistent with a branch-diversity reading: elicitation helps most when a pipeline has multiple decision paths whose intended behavior is not recoverable from code (P2), and least when one dominant branch carries the signal (P1 and P3), where the validity intervals overlap the strongest baseline.
 
 \section{Conclusion and Future Work}
 \label{sec:conclusion}
 
-We reframed automatic metric design as goal elicitation by interrogation: rather than selecting metrics first, Litmus interrogates a pipeline's source code and its practitioner to make the evaluation target explicit, then admits, rejects, or re-scopes each candidate against the resolved constraints. Across three domains---account grouping, scientific QA, and inherent risk assessment---this zero-label procedure yields near-zero redundancy and ranks first on label validity, decisively on scientific QA, with a coverage advantage on account grouping (Section~\ref{sec:sizecontrolled}), ahead of label-fitted and rubric-generating baselines; both that ranking and the design-quality picture hold when the scoring judge is swapped for a different model family (Section~\ref{sec:robustness}). Key next steps are a controlled study that compares portfolios produced with and without practitioner interrogation and has practitioners independently rate and repair them, a full regeneration ablation of the remaining design stages (Section~\ref{sec:gateablation}), and broader pipelines to test generalization.
+We reframed automatic metric design as goal elicitation by interrogation: rather than selecting metrics first, Litmus interrogates a pipeline's source code and its practitioner to make the evaluation target explicit, then admits, rejects, or re-scopes each candidate against the resolved constraints. Across three domains this zero-label procedure yields near-zero redundancy and ranks first on label validity, decisively on scientific QA, with a coverage advantage on account grouping (Section~\ref{sec:sizecontrolled}); both that ranking and the design-quality picture hold under a different judge family (Section~\ref{sec:robustness}). Key next steps are a controlled study of portfolios with and without practitioner interrogation, a full regeneration ablation of the remaining design stages (Section~\ref{sec:gateablation}), and broader pipelines.
 
 \section{Limitations}
 \label{sec:limitations}
@@ -414,6 +361,61 @@ DynRub-\textsc{FT}     & 0.000$^{\ddagger}$ & 0.000$^{\ddagger}$ & 0.000$^{\ddag
 \label{tab:crossfamilyaxes}
 \end{table*}
 
+\subsection{Size Control, Gate Ablation, and Reconstruction Fidelity}
+\label{app:robustness-tables}
+
+Tables for the size-controlled coverage check, the adversarial-validity gate ablation, and the reconstruction-fidelity pairing (Sections~\ref{sec:sizecontrolled}--\ref{sec:fidelityvalidity}).
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lcccc}
+\toprule
+Pipeline & Full & @8 rank & @8 rand & Auto. \\
+\midrule
+P1 Acct.\ grouping & 0.80 & 0.70 & $0.65{\pm}.08$ & 0.30 \\
+P2 Scientific QA & 1.00 & 0.67 & $0.58{\pm}.32$ & 0.67 \\
+P3 Risk assessment & 0.83 & 0.83 & $0.83{\pm}.00$ & 0.83 \\
+\bottomrule
+\end{tabular}
+\caption{Size-controlled coverage. Litmus full portfolio vs.\ capped to $k{=}8$ (AutoMetrics' size) by verdict-ranking and by random size-8 subsets (mean$\pm$sd), vs.\ AutoMetrics. The coverage advantage survives capping only on P1; P2 and P3 tie at matched size.}
+\label{tab:sizecontrolled}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{6pt}
+\begin{tabular}{lccc}
+\toprule
+Axis & Ungated (77) & Gated (66) & $\Delta$ \\
+\midrule
+Coverage $\uparrow$ & 1.000 & 1.000 & $+0.000$ \\
+Redundancy $\downarrow$ & 0.024 & 0.016 & $-35\%$ \\
+Grounding $\uparrow$ & 0.377 & 0.393 & $+0.017$ \\
+\bottomrule
+\end{tabular}
+\caption{Adversarial-validity gate ablation on scientific QA (P2). Counts are over the whole-solution drafted portfolio across all components, not the 13-metric scoped portfolio in Table~\ref{tab:main}. Removing the $11$ rejected metrics (of $77$ drafted; $10$ flagged) cuts redundancy by $35\%$ and raises grounding at no coverage cost; the one scoreable metric is unchanged ($\rho=0.72$).}
+\label{tab:gate}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lcccc}
+\toprule
+Pipeline & Edge-ver.\% & Conf.\ & Min & Validity $\rho$ \\
+\midrule
+P1 Acct.\ grouping & 83 & 0.93 & 0.90 & 0.51 \\
+P2 Scientific QA & 65 & 0.83 & 0.65 & 0.72 \\
+P3 Risk assessment & 83 & 0.92 & 0.88 & 0.32 \\
+\bottomrule
+\end{tabular}
+\caption{Reconstruction fidelity vs.\ downstream validity. Edge-verification \% and host-subsystem critic confidence (mean, min) against headline validity $\rho$. P2's $0.83$ is the five-node \texttt{core-qa-engine} mean; whole-graph confidence across all 30 nodes is $0.78$ (Section~\ref{sec:results}). Aggregate fidelity does not track validity (pooled $\rho=-0.06$, $n{=}7$).}
+\label{tab:fidelityvalidity}
+\end{table}
 
 \section{Architecture Generation: Pipeline and Protocol}
 \label{app:arch}
