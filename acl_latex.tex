@@ -297,10 +297,31 @@ P3 Risk assessment & 0.83 & 0.83 & $0.83{\pm}.00$ & 0.83 \\
 \label{tab:sizecontrolled}
 \end{table}
 
+\subsection{Adversarial-Validity Gate Ablation}
+\label{sec:gateablation}
+We isolate the adversarial-validity gate on the P2 draft. Of $77$ drafted metrics it rejects $11$ and flags $10$. Removing the rejects leaves coverage unchanged ($1.00$), cuts redundancy by $35\%$ ($0.024\rightarrow0.016$), and raises grounding ($0.377\rightarrow0.393$; Table~\ref{tab:gate}). The rejects are near-duplicate, pipeline-mismatched metrics---\emph{RAG Context Precision} and \emph{RAG Retrieval Recall@K} on the PDF reader, which does no query-time retrieval---and the one scoreable metric is untouched ($\rho=0.72$). This is a single-stage ablation of the already-critiqued portfolio; a full regeneration ablation, and ablations of reconstruction, graph verification, clarification, and downstream metric design, remain future work.
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{6pt}
+\begin{tabular}{lccc}
+\toprule
+Axis & Ungated (77) & Gated (66) & $\Delta$ \\
+\midrule
+Coverage $\uparrow$ & 1.000 & 1.000 & $+0.000$ \\
+Redundancy $\downarrow$ & 0.024 & 0.016 & $-35\%$ \\
+Grounding $\uparrow$ & 0.377 & 0.393 & $+0.017$ \\
+\bottomrule
+\end{tabular}
+\caption{Adversarial-validity gate ablation on scientific QA (P2). Counts are over the whole-solution drafted portfolio across all components, not the 13-metric scoped portfolio in Table~\ref{tab:main}. Removing the $11$ rejected metrics (of $77$ drafted; $10$ flagged) cuts redundancy by $35\%$ and raises grounding at no coverage cost; the one scoreable metric is unchanged ($\rho=0.72$).}
+\label{tab:gate}
+\end{table}
+
 \section{Conclusion and Future Work}
 \label{sec:conclusion}
 
-We reframed automatic metric design as goal elicitation by interrogation: rather than selecting metrics first, Litmus interrogates a pipeline's source code and its practitioner to make the evaluation target explicit, then admits, rejects, or re-scopes each candidate against the resolved constraints. Across three domains---account grouping, scientific QA, and inherent risk assessment---this zero-label procedure yields near-zero redundancy and the strongest label validity, with a residual coverage advantage on account grouping (Section~\ref{sec:sizecontrolled}), ahead of label-fitted and rubric-generating baselines; that it ranks first on validity everywhere while baselines swing across domains points to design-time elicitation, not artifact-specific tuning. Key next steps are a human study of whether practitioner answers measurably change the resulting metrics, and broader pipelines to test generalization.
+We reframed automatic metric design as goal elicitation by interrogation: rather than selecting metrics first, Litmus interrogates a pipeline's source code and its practitioner to make the evaluation target explicit, then admits, rejects, or re-scopes each candidate against the resolved constraints. Across three domains---account grouping, scientific QA, and inherent risk assessment---this zero-label procedure yields near-zero redundancy and the strongest label validity, with a residual coverage advantage on account grouping (Section~\ref{sec:sizecontrolled}), ahead of label-fitted and rubric-generating baselines; that it ranks first on validity everywhere while baselines swing across domains points to design-time elicitation, not artifact-specific tuning. Key next steps are a human study of whether practitioner answers measurably change the resulting metrics, a full regeneration ablation of the remaining design stages (Section~\ref{sec:gateablation}), and broader pipelines to test generalization.
 
 \section{Limitations}
 \label{sec:limitations}
@@ -417,12 +438,12 @@ The critic scores its confidence in each node and proposes missing ones; nodes b
 \paragraph{The evidence behind three components.}
 Identifiers are sanitized; the data is proprietary (Section~\ref{sec:ethics}). \emph{Override Mapper (3)} maps to the override-mapper module plus \texttt{override\_rules.json} (classes \textsc{asset, liability, equity, revenue, expense, non-operating, other-operating, non-controlling-interest}); verified edges include \texttt{orchestrator:route\_accounts $\to$ override\_mapper:classify\_batch} and \texttt{$\to$ llm\_client:complete}, which is why its judge is scoped to ``Account type override'' rows. \emph{RAG Mapper (4)} maps to the RAG module with verified edges \texttt{rag\_mapper:map $\to$ azure\_search\_client:search} and \texttt{$\to$ llm\_client:complete}, licensing a groundedness judge. \emph{Azure Search (6)}, detected as \texttt{vector\_store}, has three verified inbound edges (nodes 2, 4, 5), so one dependency-health monitor covers all three callers.
 
-\paragraph{Self-review (adversarial validity) questions.} After drafting candidate metrics, Litmus interrogates each one along four axes ---pipeline fit, validity conditions, data assumptions, and direction of goodness ---and emits a verdict of \textsc{pass}, \textsc{flag}, or \textsc{reject}. On the scientific-QA pipeline this self-review passed 36, flagged 10, and rejected 11 of the candidate metrics. Representative resolved questions:
+\paragraph{Self-review (adversarial validity) questions.} After drafting candidate metrics, Litmus interrogates each one along four axes ---pipeline fit, validity conditions, data assumptions, and direction of goodness ---and emits a verdict of \textsc{pass}, \textsc{flag}, or \textsc{reject}. On the scientific-QA pipeline the critic scored 57 of the 77 drafted metrics (20 were never scored): it passed 36, flagged 10, and rejected 11. Representative resolved questions:
 
 \begin{itemize}
 \item \textbf{Pipeline fit.} ``Does \emph{RAG Context Precision} measure the component it is attached to?'' \textsc{reject}: the component is a PDF reader/parser that extracts text; it performs no query-based retrieval, so a retrieval-quality metric cannot apply.
 \item \textbf{Data assumptions.} ``Does \emph{Tool Selection Accuracy} have the ground truth it needs?'' \textsc{flag}: the computation requires a golden-tool mapping; it is unclear whether such labels exist in this codebase.
-\item \textbf{Data assumptions.} ``Can \emph{Retrieval Recall@K} be computed?''
+\item \textbf{Data assumptions.} ``Can \emph{RAG Retrieval Recall@K} on the retrieval stage be computed?''
 \textsc{flag}: Recall@K needs known-relevant documents per query, and no labeled evaluation set was found.
 \item \textbf{Validity conditions.} ``Is the \emph{Settings \& Configuration} tier really an LLM-generation stage?'' \textsc{flag}: it manages prompt templates and configuration rather than generating text, so the \{LLM\} classification is questionable.
 \item \textbf{Pipeline fit.} ``Do production-monitoring metrics (\emph{Error Rate per Exception Class}, \emph{Retry Success Rate}, \emph{Dead-Letter Queue Rate}) apply to the test-suite component?'' \textsc{flag}: test suites are not production services, so exception/retry rates indicate test failures, not production health.
